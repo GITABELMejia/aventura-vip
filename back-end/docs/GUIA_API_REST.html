@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Guía de la API REST - Aventura Vip de Cusco</title>
+</head>
+<body style="font-family: Helvetica, Arial, sans-serif; font-size: 11pt; color: #222; line-height: 1.5;">
+
+<!-- ============================================================ -->
+<!-- PORTADA                                                        -->
+<!-- ============================================================ -->
+<div style="text-align:center; margin-top:60px;">
+  <h1 style="color:#3D271C; font-size:26pt;">Guía de la API REST</h1>
+  <h2 style="color:#555; font-size:16pt;">Sistema de Movilidad</h2>
+  <h2 style="color:#3D271C; font-size:18pt; margin-top:10px;">Aventura Vip de Cusco</h2>
+  <p style="margin-top:50px; font-size:12pt;">Backend: Node.js + Express + TypeScript</p>
+  <p style="font-size:12pt;">Base de datos: PostgreSQL 15</p>
+  <p style="margin-top:30px; font-size:11pt; color:#777;">Versión de la API: 1.0.0</p>
+  <p style="font-size:11pt; color:#777;">Módulo implementado: Autenticación (Login)</p>
+</div>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- TABLA DE CONTENIDOS                                           -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">Tabla de contenidos</h1>
+<ol>
+  <li><b>Introducción</b></li>
+  <li><b>Arquitectura del sistema</b></li>
+  <li><b>Requisitos previos</b></li>
+  <li><b>Instalación y puesta en marcha</b>
+    <ol>
+      <li>Base de datos (PostgreSQL en Docker)</li>
+      <li>Servidor API</li>
+    </ol>
+  </li>
+  <li><b>Estructura del proyecto</b>
+    <ol>
+      <li>Registro de peticiones con Morgan</li>
+    </ol>
+  </li>
+  <li><b>Base de datos</b>
+    <ol>
+      <li>Tablas del esquema</li>
+      <li>Procedimientos almacenados</li>
+      <li>Cuentas de prueba</li>
+    </ol>
+  </li>
+  <li><b>Autenticación con tokens JWT</b></li>
+  <li><b>Endpoints de la API</b>
+    <ol>
+      <li>POST /api/auth/login</li>
+      <li>GET /api/auth/me</li>
+    </ol>
+  </li>
+  <li><b>Ejemplos de uso con curl</b></li>
+  <li><b>Códigos de estado y errores</b></li>
+  <li><b>Buenas prácticas de seguridad</b></li>
+  <li><b>Aplicación web (frontend) y modo PWA</b>
+    <ol>
+      <li>Frontend (React + Vite)</li>
+      <li>Probar en el celular (red local)</li>
+      <li>PWA instalable con túnel HTTPS (cloudflared)</li>
+    </ol>
+  </li>
+  <li><b>Próximos pasos</b></li>
+</ol>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 1. INTRODUCCIÓN                                               -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">1. Introducción</h1>
+<p>
+Este documento es la <b>guía de uso de la API REST</b> del sistema de movilidad
+de la empresa <b>Aventura Vip de Cusco</b>, la cual brinda servicio de taxis
+corporativo al grupo Belmond (hoteles Monastery y Nazarenas).
+</p>
+<p>
+Esta primera versión implementa el módulo de <b>Autenticación (Login)</b>:
+la parte del sistema que valida las credenciales de un usuario y emite un
+<b>token JWT</b> que identifica a la persona en todas las peticiones futuras.
+</p>
+<p>
+El backend está desarrollado en <b>Node.js con Express y TypeScript</b>, y usa
+<b>PostgreSQL 15</b> como base de datos. La lógica de negocio vive en
+procedimientos almacenados de PostgreSQL, por lo que la API es una "capa fina"
+que conecta las peticiones HTTP con la base de datos.
+</p>
+
+<!-- ============================================================ -->
+<!-- 2. ARQUITECTURA                                               -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">2. Arquitectura del sistema</h1>
+<p>El flujo completo del login funciona de la siguiente manera:</p>
+<pre>
+  Cliente (curl / futura app)
+      |
+      | 1. POST /api/auth/login  {correo_o_dni, clave}
+      v
+  Servidor Node.js (Express) --- src/modules/auth/auth.controller.ts
+      |  (morgan registra cada peticion HTTP en la consola)
+      |
+      | 2. Llama al procedimiento  SELECT SP_LOGIN($1, $2)
+      v
+  PostgreSQL 15 --- valida credenciales, devuelve datos + permisos (JSONB)
+      |
+      | 3. Respuesta JSON
+      v
+  Servidor: firma el token JWT (12 horas de vigencia)
+      |
+      | 4. Respuesta HTTP 200  {token, usuario}
+      v
+  Cliente: guarda el token y lo envia en el encabezado Authorization
+      |
+      | 5. GET /api/auth/me  (Authorization: Bearer &lt;token&gt;)
+      v
+  Middleware autenticarToken valida la firma y expiracion del token
+      |
+      v
+  Se devuelven los datos del usuario autenticado
+</pre>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 3. REQUISITOS                                                 -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">3. Requisitos previos</h1>
+<p>Para ejecutar este proyecto se necesita:</p>
+<ul>
+  <li><b>Node.js</b> versión 18 o superior (incluye <code>npm</code>).</li>
+  <li><b>Docker</b> (para correr PostgreSQL 15 sin instalarlo en el sistema).</li>
+  <li><b>Python 3</b> (opcional, solo para regenerar este PDF).</li>
+  <li><b>curl</b> o <b>Postman</b> para probar los endpoints.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 4. INSTALACIÓN                                                -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">4. Instalación y puesta en marcha</h1>
+
+<h2 style="color:#3D271C;">4.1. Base de datos (PostgreSQL 15 en Docker)</h2>
+<p>Levantar el contenedor con PostgreSQL 15:</p>
+<pre><code>docker run --name av-test-pg -e POSTGRES_USER=aventura \
+  -e POSTGRES_PASSWORD=aventura123 -e POSTGRES_DB=aventura_vip \
+  -p 5432:5432 -d postgres:15-alpine</code></pre>
+<p>Crear e inyectar los scripts SQL (en este orden obligatorio):</p>
+<pre><code>cd "back-end"
+npm run db:init</code></pre>
+<p>O ejecutar manualmente cada script en orden:</p>
+<pre><code>docker exec -i av-test-pg psql -U aventura -d aventura_vip &lt; db/00_SCHEMA.SQL
+docker exec -i av-test-pg psql -U aventura -d aventura_vip &lt; db/02_AUDIT_TRIGGER.SQL
+docker exec -i av-test-pg psql -U aventura -d aventura_vip &lt; db/01_PROCEDURES.SQL
+docker exec -i av-test-pg psql -U aventura -d aventura_vip &lt; db/03_SEEDS.SQL</code></pre>
+<p>El orden importa porque cada script usa lo que crea el anterior:</p>
+<ul>
+  <li><code>00_SCHEMA.SQL</code> - crea las tablas.</li>
+  <li><code>02_AUDIT_TRIGGER.SQL</code> - crea los triggers de auditoría.</li>
+  <li><code>01_PROCEDURES.SQL</code> - crea los procedimientos almacenados.</li>
+  <li><code>03_SEEDS.SQL</code> - inserta roles, empresas y cuentas de prueba.</li>
+</ul>
+
+<h2 style="color:#3D271C;">4.2. Servidor API</h2>
+<p>Instalar las dependencias y compilar el TypeScript:</p>
+<pre><code>cd "back-end"
+npm install
+npm run build</code></pre>
+<p>Levantar el servidor (dos opciones):</p>
+<pre><code>npm start        # ejecuta la versión compilada (recomendado en producción)
+npm run dev      # modo desarrollo (se recarga al guardar)</code></pre>
+<p>El servidor escucha en <b>http://localhost:3000</b>.</p>
+<p>Configuración (archivo <code>.env</code>):</p>
+<pre><code>PORT=3000
+DATABASE_URL=postgres://aventura:aventura123@localhost:5432/aventura_vip
+JWT_SECRET=aventura_vip_super_secreto_2026_cambiar_en_produccion
+JWT_EXPIRES_IN=12h</code></pre>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 5. ESTRUCTURA DEL PROYECTO                                    -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">5. Estructura del proyecto</h1>
+<pre>
+aventura-vip/
++-- AGENTS.md                  # Guias de trabajo
++-- back-end/
+|   +-- .env / .env.example    # Variables de entorno (no publicar)
+|   +-- package.json           # Dependencias y scripts (db:init completo)
+|   +-- tsconfig.json          # Configuracion de TypeScript
+|   +-- db/
+|   |   +-- 00_SCHEMA.SQL        # Esquema: 7 tablas e indices
+|   |   +-- 01_PROCEDURES.SQL    # SP_LOGIN, SP_REGISTRAR_USUARIO, etc.
+|   |   +-- 02_AUDIT_TRIGGER.SQL # Triggers de auditoria (MODIFICADO_AT)
+|   |   +-- 03_SEEDS.SQL         # Datos iniciales (9 permisos, cuentas demo)
+|   |   +-- 05_USUARIOS_CRUD.SQL # CRUD de usuarios (SPs)
+|   |   +-- 06_ORGANIZACION.SQL  # Empresas, establecimientos, areas (SPs)
+|   |   +-- 07_SP_EXTRA.SQL      # SP_OBTENER_CATALOGOS, SP_OBTENER_ROL
+|   +-- tests/                 # 35 pruebas de integracion (vitest)
+|   +-- docs/                  # Esta guia y el informe de tesis
+|   +-- src/
+|       +-- server.ts            # Punto de entrada (arranca el servidor)
+|       +-- app.ts               # Aplicacion Express (helmet, CORS, rutas)
+|       +-- config/
+|       |   +-- database.ts      # Pool de conexiones a PostgreSQL
+|       |   +-- env.ts           # Validacion de variables de entorno
+|       +-- middlewares/
+|       |   +-- auth.middleware.ts   # Validacion de tokens JWT
+|       |   +-- autorizarPermiso.ts  # Permisos PBAC (403 si falta)
+|       |   +-- error.middleware.ts  # Manejo de errores (AppError)
+|       +-- controllers/
+|       |   +-- auth.controller.ts       # Login y /me
+|       |   +-- usuarios.controller.ts   # CRUD de usuarios
+|       |   +-- catalogos.controller.ts  # Catalogo unico (SP)
+|       |   +-- organizacion.controller.ts # Empresas/establecimientos/areas
+|       +-- routes/
+|       |   +-- auth.routes.ts / usuarios.routes.ts / catalogos.routes.ts / organizacion.routes.ts
+|       +-- modules/
+|           +-- auth/ - usuarios/    # Tipos/contratos por modulo
++-- front-end/
+    +-- index.html               # Punto de entrada HTML
+    +-- vite.config.ts           # Vite + PWA + proxy /api + darkMode
+    +-- tailwind.config.js       # Paleta oficial (negro, marron, ambar)
+    +-- public/
+    |   +-- Logo.svg             # Logo vectorial de la marca
+    |   +-- fonts/               # Azonix y Caviar Dreams (WOFF2)
+    |   +-- icono-*.png          # Iconos de la PWA
+    +-- src/
+        +-- main.tsx             # Arranque de React (contextos)
+        +-- App.tsx              # Componente raiz
+        +-- config/              # api.ts, navegacion.tsx, presets.ts
+        +-- context/             # Tema (oscuro/claro), favoritos, navegacion
+        +-- hooks/               # usePermisos, useMediaQuery
+        +-- layouts/             # DashboardLayout, Sidebar, Header
+        +-- services/            # auth, usuarios, organizacion
+        +-- router/index.tsx     # Rutas protegidas (token + permisos)
+        +-- pages/               # Login, Inicio, Usuarios, UsuarioForm, Organizacion, Perfil
+        +-- components/          # Loader, LogoVip, CampoFormulario, ui/
+        +-- types/index.ts       # Tipos de la API
+</pre>
+
+<h2 style="color:#3D271C;">5.1. Registro de peticiones con Morgan</h2>
+<p>
+El backend utiliza <b>morgan</b>, un middleware de Express que <b>registra en la
+consola cada petición HTTP</b> que recibe la API. Esto facilita el monitoreo, la
+depuración y el diagnóstico de errores en tiempo real.
+</p>
+<p>
+Al ejecutar el servidor, cada petición genera una línea de log con el método
+HTTP, la ruta, el código de estado y el tiempo de respuesta:
+</p>
+<pre>
+GET / 200 3.247 ms - 154
+POST /api/auth/login 200 101.699 ms - 751
+POST /api/auth/login 401 24.025 ms - 36
+</pre>
+<p>
+El color de la salida también es útil: <b>verde</b> indica éxito (2xx) y
+<b>amarillo</b> indica advertencias (4xx, como un login rechazado).
+</p>
+
+<!-- ============================================================ -->
+<!-- 6. BASE DE DATOS                                              -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">6. Base de datos</h1>
+
+<h2 style="color:#3D271C;">6.1. Tablas del esquema</h2>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Tabla</th><th>Descripción</th>
+  </tr>
+  <tr><td>ROLES</td><td>Roles del sistema: ADMIN, OPERADOR, CONDUCTOR, USUARIO.</td></tr>
+  <tr><td>EMPRESAS</td><td>Organizaciones: Aventura Vip de Cusco (proveedor), Belmond (cliente), Particular (app pública).</td></tr>
+  <tr><td>ESTABLECIMIENTOS</td><td>Sedes de una empresa (hoteles de Belmond: Monasterio, Palacio Nazarenas, Rio Sagrado).</td></tr>
+  <tr><td>AREAS</td><td>Sub-áreas de un establecimiento (Recepción, A&B, Cocina, Housekeeping).</td></tr>
+  <tr><td>USUARIOS</td><td>Todas las personas: empleados, conductores y clientes.</td></tr>
+  <tr><td>PERMISOS</td><td>Catálogo de permisos del sistema (PBAC, 9 permisos).</td></tr>
+  <tr><td>USUARIOS_PERMISOS</td><td>Asignación de permisos a usuarios (N:M).</td></tr>
+</table>
+<p>
+Todas las tablas principales incluyen campos de auditoría:
+<code>CREADO_AT</code>, <code>CREADO_POR</code>, <code>MODIFICADO_AT</code> y
+<code>MODIFICADO_POR</code>. Las fechas se llenan automáticamente (el trigger
+actualiza <code>MODIFICADO_AT</code> en cada edición).
+</p>
+
+<h2 style="color:#3D271C;">6.2. Procedimientos almacenados</h2>
+<p>El 100% de las consultas de la API se ejecutan mediante procedimientos almacenados:</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Procedimiento</th><th>Función</th>
+  </tr>
+  <tr><td>SP_REGISTRAR_USUARIO</td><td>Crea un usuario (cifra la clave con bcrypt).</td></tr>
+  <tr><td>SP_LOGIN</td><td>Valida credenciales según el tipo de cuenta (DNI/correo) y devuelve datos y permisos.</td></tr>
+  <tr><td>SP_VALIDAR_USUARIO</td><td>Verifica que un usuario siga activo.</td></tr>
+  <tr><td>SP_LISTAR_USUARIOS / SP_OBTENER_USUARIO</td><td>Listado con búsqueda/filtros y detalle con permisos.</td></tr>
+  <tr><td>SP_ACTUALIZAR_USUARIO / SP_CAMBIAR_ESTADO_USUARIO</td><td>Edita datos (clave opcional) y activa/inactiva usuarios.</td></tr>
+  <tr><td>SP_ASIGNAR_PERMISO / SP_QUITAR_PERMISO / SP_REEMPLAZAR_PERMISOS</td><td>Administra los permisos de un usuario.</td></tr>
+  <tr><td>SP_GUARDAR_EMPRESA / SP_GUARDAR_ESTABLECIMIENTO / SP_GUARDAR_AREA</td><td>Crean o editan los catálogos de la organización.</td></tr>
+  <tr><td>SP_CAMBIAR_ESTADO_* / SP_LISTAR_* (organización)</td><td>Estado y listados de empresas, establecimientos y áreas.</td></tr>
+  <tr><td>SP_OBTENER_CATALOGOS / SP_OBTENER_ROL_POR_NOMBRE</td><td>Catálogos en un JSONB y rol por nombre.</td></tr>
+  <tr><td>SP_ACTUALIZAR_MODIFICADO_AT</td><td>Trigger: actualiza la fecha de modificación.</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">6.3. Cuentas de prueba</h2>
+<p>Todas las cuentas usan la clave <code>demo123</code> y los trabajadores inician sesión con su <b>DNI</b>.</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>DNI (acceso)</th><th>Correo</th><th>Rol</th><th>Empresa</th><th>Reserva</th>
+  </tr>
+  <tr><td>12345678</td><td>admin@aventura.com</td><td>ADMIN</td><td>Aventura Vip de Cusco</td><td>No</td></tr>
+  <tr><td>23456789</td><td>operador@aventura.com</td><td>OPERADOR</td><td>Aventura Vip de Cusco</td><td>No</td></tr>
+  <tr><td>34567890</td><td>jorge@aventura.com</td><td>CONDUCTOR</td><td>Aventura Vip de Cusco</td><td>No</td></tr>
+  <tr><td>45678901</td><td>juan.perez@belmond.com</td><td>USUARIO</td><td>Belmond (Hotel Monasterio)</td><td>Sí</td></tr>
+  <tr><td>56789012</td><td>maria.tupac@belmond.com</td><td>USUARIO</td><td>Belmond (Palacio Nazarenas)</td><td>No</td></tr>
+</table>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 7. JWT                                                        -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">7. Autenticación con tokens JWT</h1>
+<p>
+El sistema usa <b>JSON Web Tokens (JWT)</b> para la autenticación:
+</p>
+<ul>
+  <li>Cuando un usuario inicia sesión con credenciales válidas, el servidor
+      firma un token con la clave secreta <code>JWT_SECRET</code>.</li>
+  <li>El token dura <b>12 horas</b> (configurable en <code>JWT_EXPIRES_IN</code>).</li>
+  <li>El token contiene el <code>id</code> del usuario, su <code>rol</code> y sus
+      <code>permisos</code>. Así la API no necesita consultar la base en cada petición.</li>
+  <li>Para acceder a rutas protegidas, el cliente envía el token en el encabezado:
+      <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+  <li>El middleware <code>autenticarToken</code> verifica la firma y la expiración;
+      si algo falla, responde HTTP 401.</li>
+</ul>
+<p><b>Regla de identificador de acceso</b> (validada en SP_LOGIN):</p>
+<ul>
+  <li>Trabajadores de Aventura Vip y de los hoteles (Belmond) - <b>DNI</b> (8 dígitos).</li>
+  <li>App pública (empresa "Particular") - <b>correo electrónico</b>.</li>
+  <li>El login tiene <b>rate limit</b>: 5 intentos por IP por minuto (HTTP 429).</li>
+</ul>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 8. ENDPOINTS                                                  -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">8. Endpoints de la API</h1>
+
+<h2 style="color:#3D271C;">8.1. POST /api/auth/login</h2>
+<p><b>Propósito:</b> inicia sesión y devuelve el token de acceso.</p>
+<p><b>Autenticación requerida:</b> ninguna (endpoint público).</p>
+<p><b>Cuerpo de la petición (JSON):</b></p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Campo</th><th>Tipo</th><th>Obligatorio</th><th>Descripción</th>
+  </tr>
+  <tr><td>correo_o_dni</td><td>string</td><td>Sí</td><td>Correo electrónico o DNI del usuario.</td></tr>
+  <tr><td>clave</td><td>string</td><td>Sí</td><td>Contraseña en texto plano.</td></tr>
+</table>
+<p><b>Respuesta exitosa (HTTP 200):</b></p>
+<pre><code>{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "expira_en": "2026-08-11T11:51:06.000Z",
+  "usuario": {
+    "id": 1,
+    "nombres": "Admin",
+    "apellidos": "Sistema",
+    "correo": "admin@aventura.com",
+    "dni": "12345678",
+    "telefono": "999999999",
+    "rol": "ADMIN",
+    "empresa": "Belmond",
+    "area": null,
+    "empresa_id": 1,
+    "area_id": null,
+    "puede_reservar": false,
+    "permisos": ["CREAR_RESERVAS", "DESPACHAR_COLA", "..."]
+  }
+}</code></pre>
+<p><b>Respuestas de error:</b></p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Código</th><th>Mensaje</th><th>Cuándo ocurre</th>
+  </tr>
+  <tr><td>400</td><td>Faltan datos...</td><td>No se envió correo_o_dni o clave.</td></tr>
+  <tr><td>401</td><td>Credenciales invalidas</td><td>Usuario no existe, inactivo o clave incorrecta.</td></tr>
+  <tr><td>500</td><td>Error interno del servidor</td><td>Fallo inesperado.</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">8.2. GET /api/auth/me</h2>
+<p><b>Propósito:</b> devuelve los datos del usuario autenticado.</p>
+<p><b>Autenticación requerida:</b> sí (token JWT en el encabezado).</p>
+<p><b>Cuerpo de la petición:</b> ninguno.</p>
+<p><b>Encabezado requerido:</b> <code>Authorization: Bearer &lt;token&gt;</code></p>
+<p><b>Respuesta exitosa (HTTP 200):</b></p>
+<pre><code>{
+  "id": 1,
+  "rol": "ADMIN",
+  "permisos": ["CREAR_RESERVAS", "DESPACHAR_COLA", "..."]
+}</code></pre>
+<p><b>Respuestas de error:</b></p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Código</th><th>Mensaje</th><th>Cuándo ocurre</th>
+  </tr>
+  <tr><td>401</td><td>No se envió un token...</td><td>Falta el encabezado Authorization.</td></tr>
+  <tr><td>401</td><td>Token inválido o expirado</td><td>Token falso, manipulado o vencido.</td></tr>
+  <tr><td>401</td><td>Usuario inactivo o no existe</td><td>El usuario fue desactivado tras emitir el token.</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">8.3. Gestión de usuarios - /api/usuarios</h2>
+<p><b>Propósito:</b> CRUD del módulo de usuarios. Permisos requeridos:</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Endpoint</th><th>Método</th><th>Permiso requerido</th>
+  </tr>
+  <tr><td>/api/usuarios</td><td>GET</td><td>GESTIONAR_USUARIOS o CREAR_USUARIOS</td></tr>
+  <tr><td>/api/usuarios/:id</td><td>GET</td><td>GESTIONAR_USUARIOS o CREAR_USUARIOS</td></tr>
+  <tr><td>/api/usuarios</td><td>POST</td><td>GESTIONAR_USUARIOS o CREAR_USUARIOS (con solo CREAR_USUARIOS solo rol USUARIO)</td></tr>
+  <tr><td>/api/usuarios/:id</td><td>PUT</td><td>GESTIONAR_USUARIOS o CREAR_USUARIOS (con solo CREAR_USUARIOS solo clientes)</td></tr>
+  <tr><td>/api/usuarios/:id/estado</td><td>PATCH</td><td>GESTIONAR_USUARIOS</td></tr>
+  <tr><td>/api/usuarios/:id/permisos</td><td>POST / DELETE</td><td>GESTIONAR_USUARIOS</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">8.4. Catálogos - /api/catalogos</h2>
+<p><b>Propósito:</b> devuelve roles, empresas, establecimientos, áreas y permisos
+para alimentar los formularios (una sola llamada a SP_OBTENER_CATALOGOS).
+Requiere sesión (cualquier usuario autenticado).</p>
+
+<h2 style="color:#3D271C;">8.5. Organización - /api/organizacion</h2>
+<p><b>Propósito:</b> gestión de empresas, establecimientos y áreas.
+Requiere el permiso <b>GESTIONAR_CATALOGOS</b> (solo admin).</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Endpoint</th><th>Método</th><th>Función</th>
+  </tr>
+  <tr><td>/api/organizacion/empresas</td><td>GET / POST</td><td>Listar / crear empresas</td></tr>
+  <tr><td>/api/organizacion/empresas/:id</td><td>PUT / PATCH estado</td><td>Editar / activar o inactivar</td></tr>
+  <tr><td>/api/organizacion/establecimientos</td><td>GET / POST</td><td>Listar / crear establecimientos</td></tr>
+  <tr><td>/api/organizacion/establecimientos/:id</td><td>PUT / PATCH estado</td><td>Editar / activar o inactivar</td></tr>
+  <tr><td>/api/organizacion/areas</td><td>GET / POST</td><td>Listar / crear áreas</td></tr>
+  <tr><td>/api/organizacion/areas/:id</td><td>PUT / PATCH estado</td><td>Editar / activar o inactivar</td></tr>
+</table>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 9. EJEMPLOS CON CURL                                          -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">9. Ejemplos de uso con curl</h1>
+
+<h2 style="color:#3D271C;">9.1. Iniciar sesión (trabajador, por DNI)</h2>
+<pre><code>curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo_o_dni":"12345678","clave":"demo123"}'</code></pre>
+
+<h2 style="color:#3D271C;">9.2. Iniciar sesión (app pública, por correo)</h2>
+<pre><code>curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo_o_dni":"usuario@app.com","clave":"demo123"}'</code></pre>
+
+<h2 style="color:#3D271C;">9.3. Consultar el perfil (/me) con el token</h2>
+<p>Paso 1: guardar el token en una variable:</p>
+<pre><code>TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo_o_dni":"12345678","clave":"demo123"}' \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")</code></pre>
+<p>Paso 2: usarlo en el endpoint protegido:</p>
+<pre><code>curl http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer $TOKEN"</code></pre>
+
+<h2 style="color:#3D271C;">9.4. Ejemplo de error: credenciales incorrectas</h2>
+<pre><code>curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo_o_dni":"12345678","clave":"clave_equivocada"}'
+# Respuesta: {"mensaje":"Credenciales invalidas"}   (HTTP 401)</code></pre>
+
+<h2 style="color:#3D271C;">9.5. Ejemplo de error: sin token</h2>
+<pre><code>curl http://localhost:3000/api/auth/me
+# Respuesta: {"mensaje":"No se envió un token de acceso"}   (HTTP 401)</code></pre>
+
+<h2 style="color:#3D271C;">9.6. Ejemplo de error: rate limit (fuerza bruta)</h2>
+<pre><code># Tras 5 intentos fallidos en un minuto, la API responde:
+# {"mensaje":"Demasiados intentos de acceso. Espera un momento..."}  (HTTP 429)</code></pre>
+
+<h2 style="color:#3D271C;">9.7. Listar usuarios (requiere permiso GESTIONAR_USUARIOS o CREAR_USUARIOS)</h2>
+<pre><code>curl "http://localhost:3000/api/usuarios?q=&rol=&estado=" \
+  -H "Authorization: Bearer $TOKEN"</code></pre>
+
+<h2 style="color:#3D271C;">9.8. Prueba rápida del servidor</h2>
+<pre><code>curl http://localhost:3000/
+# Respuesta: {"nombre":"API Aventura Vip de Cusco","version":"1.0.0","estado":"Servidor en línea",...}</code></pre>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 10. CÓDIGOS DE ESTADO                                         -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">10. Códigos de estado y errores</h1>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Código</th><th>Significado</th><th>Uso en esta API</th>
+  </tr>
+  <tr><td>200</td><td>OK</td><td>Petición exitosa (login, /me, listados).</td></tr>
+  <tr><td>201</td><td>Creado</td><td>Recurso creado (usuario, empresa, establecimiento, área).</td></tr>
+  <tr><td>400</td><td>Solicitud incorrecta</td><td>Faltan campos obligatorios o formato inválido.</td></tr>
+  <tr><td>401</td><td>No autorizado</td><td>Credenciales inválidas o token ausente/vencido/revocado.</td></tr>
+  <tr><td>403</td><td>Prohibido</td><td>El usuario no tiene el permiso requerido (PBAC).</td></tr>
+  <tr><td>404</td><td>No encontrado</td><td>La ruta o el recurso solicitado no existe.</td></tr>
+  <tr><td>409</td><td>Conflicto</td><td>Correo/DNI duplicado o nombre repetido en el mismo nivel.</td></tr>
+  <tr><td>429</td><td>Demasiadas peticiones</td><td>Se superó el rate limit del login (5 intentos/min).</td></tr>
+  <tr><td>500</td><td>Error interno</td><td>Fallo inesperado del servidor.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<!-- 11. SEGURIDAD                                                 -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">11. Buenas prácticas de seguridad</h1>
+<ul>
+  <li>Las claves se almacenan <b>cifradas con bcrypt</b> (nunca en texto plano).</li>
+  <li>El servidor <b>nunca devuelve la clave</b> en las respuestas.</li>
+  <li>Los errores de login usan el mismo mensaje genérico ("Credenciales invalidas")
+      para no revelar si el identificador o la clave fue lo incorrecto.</li>
+  <li><b>helmet</b> añade cabeceras HTTP seguras (CSP, X-Frame-Options, HSTS).</li>
+  <li><b>CORS restringido</b> a los orígenes configurados en <code>CORS_ORIGENES</code>
+      (en producción se agrega el dominio del sistema).</li>
+  <li><b>Rate limit</b> en el login (5 intentos por IP por minuto, HTTP 429).</li>
+  <li>Control de acceso <b>por permisos (PBAC)</b>: cada endpoint declara el
+      permiso que exige y el middleware responde HTTP 403 si falta.</li>
+  <li>El archivo <code>.env</code> con <code>JWT_SECRET</code> <b>no debe subirse</b>
+      a repositorios públicos; en producción usar un gestor de secretos.</li>
+  <li>Los tokens expiran (12 h); los usuarios inactivos pierden el acceso aunque
+      su token siga "vigente" (validación con SP_VALIDAR_USUARIO).</li>
+  <li>El 100% de las consultas se ejecutan mediante <b>procedimientos almacenados</b>
+      con parámetros (protección contra inyección SQL).</li>
+  <li>En producción se debe servir la API por <b>HTTPS</b>.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 12. APLICACIÓN WEB (FRONTEND) Y MODO PWA                       -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">12. Aplicación web (frontend) y modo PWA</h1>
+
+<h2 style="color:#3D271C;">12.1. Frontend (React + Vite)</h2>
+<p>
+El frontend es una SPA (Single Page Application) desarrollada en
+<b>React</b> con <b>Vite</b>, <b>Tailwind CSS</b> y <b>TypeScript</b>. Usa
+<code>axios</code> para llamar a la API, <code>react-router-dom</code> para la
+navegación y <code>vite-plugin-pwa</code> para convertir la app en una
+<b>PWA (Progressive Web App)</b>: instalable y funcional sin conexión.
+</p>
+<p>Instalar las dependencias y arrancar el servidor de desarrollo:</p>
+<pre><code>cd "front-end"
+npm install
+npm run dev</code></pre>
+<p>
+El servidor de desarrollo escucha en <b>http://localhost:5173</b> y redirige
+todas las peticiones <code>/api</code> hacia el backend (puerto 3000)
+mediante <code>server.proxy</code> en <code>vite.config.ts</code>.
+</p>
+<p>Generar el build de producción (incluye manifest y service worker):</p>
+<pre><code>npm run build
+npm run preview</code></pre>
+<p>
+El build genera <code>dist/sw.js</code> (service worker), el
+<code>dist/manifest.webmanifest</code> y el registro automático
+(<code>dist/registerSW.js</code>).
+</p>
+
+<h2 style="color:#3D271C;">12.2. Probar en el celular (red local)</h2>
+<p>Opción A: abrir la app con el navegador de un celular en la misma red Wi-Fi.</p>
+<ol>
+  <li>En <code>vite.config.ts</code> debe estar <code>server.host: true</code>
+      para exponer el servidor hacia la red local (ya configurado).</li>
+  <li>Conocer la IP local del Mac:
+      <code>ipconfig getifaddr en0</code>.</li>
+  <li>En el celular abrir <code>http://IP_DEL_MAC:5173</code>.</li>
+</ol>
+<p>
+El login y toda la app funcionan normalmente, pero <b>no se puede instalar</b>:
+los navegadores exigen HTTPS para habilitar el service worker y la instalación.
+</p>
+
+<h2 style="color:#3D271C;">12.3. PWA instalable con túnel HTTPS (cloudflared)</h2>
+<p>
+Opción B: exponer la app por HTTPS con un túnel gratuito de Cloudflare
+(<code>cloudflared</code>) para que el navegador permita <b>instalar la app</b>
+y usarla sin internet.
+</p>
+
+<p>1) Generar el build de producción y servirlo:</p>
+<pre><code>cd "front-end"
+npm run build
+npm run preview -- --host</code></pre>
+
+<p>
+2) Descargar el binario de <code>cloudflared</code> (no requiere Homebrew; se
+obtiene de GitHub Releases y se coloca en <code>~/.local/bin</code>): en Apple
+Intel usar <code>cloudflared-darwin-amd64.tgz</code>; en Apple Silicon usar
+<code>cloudflared-darwin-arm64.tgz</code>.
+</p>
+<pre><code>curl -L -o cloudflared.tgz https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64.tgz
+tar -xzf cloudflared.tgz
+chmod +x cloudflared
+mv cloudflared ~/.local/bin/</code></pre>
+
+<p>3) Abrir el túnel hacia el preview (puerto 4173):</p>
+<pre><code>~/.local/bin/cloudflared tunnel --url http://localhost:4173</code></pre>
+
+<p>
+4) Del log del túnel tomar la URL pública
+<code>https://XXXX.trycloudflare.com</code> y abrirla en el celular. Ahí ya
+aparece la instalación: en Android/Chrome desde el menú "Instalar aplicación";
+en iPhone/Safari en "Compartir" y luego "Añadir a pantalla de inicio".
+</p>
+
+<p>
+Si el preview responde <b>HTTP 403</b> para el host del túnel, es porque Vite
+bloquea nombres de host desconocidos; se resuelve con
+<code>preview.allowedHosts: true</code> en <code>vite.config.ts</code>.
+</p>
+
+<p>
+La URL del túnel es <b>temporal</b> (cambia al reiniciar el túnel) y, mientras
+esté activa, la app queda expuesta a Internet; conviene cerrar el túnel al
+terminar de probar (<code>pkill cloudflared</code>).
+</p>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 13. PRÓXIMOS PASOS                                            -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">13. Próximos pasos</h1>
+<p>El módulo de autenticación queda listo. Las siguientes fases serán:</p>
+<ul>
+  <li><b>Gestión de usuarios</b>: CRUD con SP_REGISTRAR_USUARIO y asignación de permisos.</li>
+  <li><b>Reservas</b>: creación y control de viajes (vales de Belmond).</li>
+  <li><b>Flota y conductores</b>: vehículos, disponibilidad y validación del código secreto.</li>
+  <li><b>Cola nocturna</b>: orden de despacho y GPS.</li>
+</ul>
+
+</body>
+</html>

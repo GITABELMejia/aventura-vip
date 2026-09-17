@@ -1,0 +1,178 @@
+/* ============================================================================
+   ESTILOS GLOBALES DEL FRONTEND
+   ----------------------------------------------------------------------------
+   Capas de Tailwind + estilos premium de la credencial de acceso VIP:
+   * glassmorphism de la tarjeta de login.
+   * degradado atmosferico del fondo.
+   * respeto a usuarios con reduccion de movimiento.
+   ============================================================================ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   FUENTES DE LA MARCA
+   ----------------------------------------------------------------------------
+   * Azonix        -> tipografia de lujo/display (titulos, logo, marcas VIP).
+   * Caviar Dreams -> tipografia de texto (cuerpo, formularios, dashboard).
+   Ambas se sirven en woff2 desde /fonts/ (fuentes libres).
+   ============================================================================ */
+@font-face {
+  font-family: 'Azonix';
+  src: url('/fonts/Azonix-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Caviar Dreams';
+  src: url('/fonts/CaviarDreams-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Caviar Dreams';
+  src: url('/fonts/CaviarDreams-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Caviar Dreams';
+  src: url('/fonts/CaviarDreams-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Caviar Dreams';
+  src: url('/fonts/CaviarDreams-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Configuracion base: altura completa y fondo oscuro global. */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-antracita-800 text-hueso-100 antialiased font-sans-geo;
+}
+
+/* ----------------------------------------------------------------------------
+   COMPONENTES PREMIUM
+---------------------------------------------------------------------------- */
+
+/* Fondo atmosferico con reflejos dorados sutiles (capas radiales). */
+.fondo-vip {
+  background:
+    radial-gradient(1200px 500px at 80% -10%, rgba(193, 124, 38, 0.14), transparent 60%),
+    radial-gradient(900px 600px at 0% 110%, rgba(193, 124, 38, 0.08), transparent 55%),
+    linear-gradient(160deg, #000000 0%, #0a0a0b 45%, #000000 100%);
+}
+
+/* Tarjeta con efecto glassmorphism (cristal translucido + borde sutil). */
+.glass-card {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(217, 166, 79, 0.14);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.8);
+}
+
+/* Linea divisoria dorada degradada. */
+.linea-dorada {
+  background: linear-gradient(90deg, transparent, rgba(193, 124, 38, 0.7), transparent);
+}
+
+/* Enlace discreto: aparece con transicion solo al enfocarse. */
+.enlace-discreto {
+  @apply text-hueso-400 transition-colors duration-200;
+}
+.enlace-discreto:hover {
+  @apply text-dorado-400;
+}
+
+/* Texto con letterspacing amplio (sello "EXCLUSIVITY"). */
+.letras-espaciadas {
+  letter-spacing: 0.35em;
+}
+
+/* Foco de teclado visible: anillo dorado para navegacion accesible. */
+.focus-dorado:focus-visible {
+  outline: 2px solid rgba(193, 124, 38, 0.8);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ----------------------------------------------------------------------------
+   AUTOFILL DEL NAVEGADOR (visibilidad de contrasenas y campos)
+   Chrome/Safari aplican estilos propios al autocompletar que dejan el texto
+   invisible sobre fondos oscuros. Estos overrides lo corrigen.
+---------------------------------------------------------------------------- */
+.fondo-vip input:-webkit-autofill,
+.fondo-vip input:-webkit-autofill:hover,
+.fondo-vip input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f5f2eb;
+  caret-color: #f5f2eb;
+  -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.4) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f5f2eb;
+  caret-color: #f5f2eb;
+  -webkit-box-shadow: 0 0 0 1000px #221610 inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* ----------------------------------------------------------------------------
+   LOGIN: FORMULARIOS SIEMPRE OSCUROS
+   La pagina de acceso tiene fondo negro fijo (identidad de marca), por lo que
+   sus campos se fuerzan al estilo oscuro sin importar el tema seleccionado.
+---------------------------------------------------------------------------- */
+.fondo-vip input,
+.fondo-vip textarea {
+  color: #f5f2eb !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  caret-color: #f5f2eb !important;
+}
+.fondo-vip input::placeholder {
+  color: #9b948a !important;
+}
+.fondo-vip label {
+  color: #b8afa1 !important;
+}
+.fondo-vip [data-icono-campo] {
+  color: #9b948a !important;
+}
+.fondo-vip input[class*="border-coral"] {
+  border-color: rgba(229, 72, 77, 0.7) !important;
+}
+
+/* ----------------------------------------------------------------------------
+   REDUCCION DE MOVIMIENTO (accesibilidad)
+   Si el usuario pide menos movimiento en el sistema operativo, se apagan
+   animaciones y transiciones para no causar mareos.
+---------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

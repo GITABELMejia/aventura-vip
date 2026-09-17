@@ -1,0 +1,18 @@
+// ============================================================================
+// CONFIGURACION DE TYPESCRIPT PARA ARCHIVOS DE NODE/VITE
+// ----------------------------------------------------------------------------
+// Este archivo cubre los archivos de configuracion (vite.config.ts) que corren
+// en Node, no en el navegador. Requiere types de Node.
+// ============================================================================
+
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "strict": true
+  },
+  "include": ["vite.config.ts"]
+}

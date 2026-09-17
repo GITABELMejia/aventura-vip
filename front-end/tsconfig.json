@@ -1,0 +1,32 @@
+// ============================================================================
+// CONFIGURACION DE TYPESCRIPT (PROYECTO FRONTEND)
+// ----------------------------------------------------------------------------
+// Define como TypeScript compila los archivos .ts/.tsx del frontend.
+//   * jsx: react-jsx        -> usa la nueva transformacion de JSX (sin import).
+//   * moduleResolution: bundler -> compatible con Vite.
+//   * noEmit: true          -> Vite se encarga de emitir el build.
+// ============================================================================
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

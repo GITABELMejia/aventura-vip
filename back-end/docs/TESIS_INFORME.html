@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Informe de Tesis - Sistema de Gestión de Movilidad Aventura Vip de Cusco</title>
+</head>
+<body style="font-family: Helvetica, Arial, sans-serif; font-size: 11pt; color: #222; line-height: 1.5;">
+
+<!-- ============================================================ -->
+<!-- PORTADA                                                        -->
+<!-- ============================================================ -->
+<div style="text-align:center; margin-top:50px;">
+  <p style="font-size:12pt; color:#555;">UNIVERSIDAD ... - FACULTAD DE INGENIERÍA</p>
+  <p style="font-size:12pt; color:#555;">ESCUELA PROFESIONAL DE INGENIERÍA DE SISTEMAS</p>
+  <p style="margin-top:40px; font-size:11pt; color:#777;">(COMPLETAR CON LOS DATOS DE LA UNIVERSIDAD)</p>
+  <h1 style="color:#3D271C; font-size:22pt; margin-top:40px;">DISEÑO E IMPLEMENTACIÓN DE UN SISTEMA DE GESTIÓN DE MOVILIDAD PARA LA EMPRESA AVENTURA VIP DE CUSCO</h1>
+  <p style="margin-top:40px; font-size:12pt; color:#555;">TESIS PARA OPTAR EL TÍTULO PROFESIONAL DE<br>INGENIERO DE SISTEMAS</p>
+  <p style="margin-top:40px; font-size:12pt;">Autor: (NOMBRES Y APELLIDOS DEL TESISTA)</p>
+  <p style="font-size:12pt;">Asesor: (NOMBRES Y APELLIDOS DEL ASESOR)</p>
+  <p style="margin-top:50px; font-size:12pt;">CUSCO - PERÚ</p>
+  <p style="font-size:12pt;">2026</p>
+</div>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- TABLA DE CONTENIDOS                                           -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">TABLA DE CONTENIDOS</h1>
+<ol>
+  <li><b>INTRODUCCIÓN</b></li>
+  <li><b>CAPÍTULO I: PLANTEAMIENTO DEL PROBLEMA</b>
+    <ol>
+      <li>Descripción de la realidad problemática</li>
+      <li>Formulación del problema</li>
+      <li>Objetivos de la investigación</li>
+      <li>Justificación e importancia</li>
+      <li>Alcance y limitaciones</li>
+    </ol>
+  </li>
+  <li><b>CAPÍTULO II: MARCO TEÓRICO</b>
+    <ol>
+      <li>Antecedentes de la investigación</li>
+      <li>Bases teóricas</li>
+      <li>Marco conceptual</li>
+    </ol>
+  </li>
+  <li><b>CAPÍTULO III: METODOLOGÍA</b>
+    <ol>
+      <li>Tipo y diseño de investigación</li>
+      <li>Metodología de desarrollo de software</li>
+      <li>Técnicas e instrumentos de recolección de datos</li>
+      <li>Población y muestra</li>
+    </ol>
+  </li>
+  <li><b>CAPÍTULO IV: TECNOLOGÍAS Y HERRAMIENTAS</b>
+    <ol>
+      <li>Stack tecnológico</li>
+      <li>Justificación de las tecnologías elegidas</li>
+    </ol>
+  </li>
+  <li><b>CAPÍTULO V: ARQUITECTURA Y DISEÑO DEL SISTEMA</b>
+    <ol>
+      <li>Arquitectura de software propuesta</li>
+      <li>Diseño de la base de datos</li>
+      <li>Diseño del módulo de autenticación</li>
+      <li>Modelo de seguridad (roles y permisos)</li>
+    </ol>
+  </li>
+  <li><b>CAPÍTULO VI: RESULTADOS Y ESTADO DEL DESARROLLO</b></li>
+  <li><b>CONCLUSIONES</b></li>
+  <li><b>RECOMENDACIONES</b></li>
+  <li><b>REFERENCIAS BIBLIOGRÁFICAS</b></li>
+</ol>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- RESUMEN                                                        -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">RESUMEN</h1>
+<p>
+El presente trabajo de investigación tiene como objetivo diseñar e implementar un
+<b>sistema de gestión de movilidad</b> para la empresa <b>Aventura Vip de Cusco</b>,
+dedicada al transporte de pasajeros y que presta servicios corporativos al grupo
+<b>Belmond</b> (Hoteles Monastery y Palacio Nazarenas) mediante vales de viaje y
+servicios externos en efectivo.
+</p>
+<p>
+La investigación surge de la necesidad de resolver problemas operativos concretos:
+errores en las reservas realizadas por WhatsApp y teléfono, vales de papel que se
+pierden o se malogran, documentos de la flota desorganizados, ausencia de control
+sobre los conductores, una cola nocturna de despacho que no se respeta y servicios
+en efectivo sin control financiero.
+</p>
+<p>
+Como solución se propone un sistema multiplataforma construido sobre una
+<b>arquitectura multicapa con lógica de negocio centrada en la base de datos</b>
+(SP-Centric) y un <b>backend monolito modular</b> en Node.js con Express y
+TypeScript, una base de datos <b>PostgreSQL 15</b> y un frontend en <b>React</b>.
+La seguridad se garantiza mediante tokens <b>JWT</b> y un modelo de control de
+acceso basado en permisos (PBAC) con claves cifradas con <b>bcrypt</b>.
+</p>
+<p>
+Al cierre del presente informe se encuentran implementadas y funcionales las
+<b>Fases 1 y 2</b> del sistema: el <b>módulo de autenticación</b> (login con
+reglas por tipo de cuenta y rate limit), el <b>dashboard integral</b>
+responsive con menú lateral y modo oscuro/claro, el <b>módulo de gestión de
+usuarios</b> (crear, listar, editar, permisos por checkboxes y accesos por
+rol) y el <b>módulo de organización</b> (empresas, establecimientos y áreas).
+Todo validado con <b>35 pruebas de integración automatizadas</b> que pasan
+contra la base de datos real. Los resultados permiten afirmar que la
+arquitectura propuesta (100% SP-Centric) es viable, segura y escalable para
+las fases posteriores del sistema.
+</p>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- INTRODUCCIÓN                                                  -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">INTRODUCCIÓN</h1>
+<p>
+La transformación digital del transporte urbano ha dado paso a plataformas de
+movilidad que gestionan flotas, conductores, reservas y pagos en tiempo real. Sin
+embargo, muchas empresas tradicionales de taxis -como Aventura Vip de Cusco- aún
+operan con procesos manuales y desorganizados que generan pérdidas económicas,
+errores operativos y descontento en los clientes corporativos.
+</p>
+<p>
+La presente investigación aborda esta problemática mediante el diseño e
+implementación de un sistema de gestión de movilidad a la medida de la empresa.
+El trabajo se estructura de la siguiente manera: el Capítulo I plantea el
+problema y define los objetivos; el Capítulo II desarrolla el marco teórico; el
+Capítulo III describe la metodología; el Capítulo IV presenta las tecnologías
+utilizadas; el Capítulo V detalla la arquitectura y el diseño del sistema; y el
+Capítulo VI muestra el estado actual del desarrollo. Finalmente se presentan las
+conclusiones y recomendaciones.
+</p>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- CAPÍTULO I                                                     -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">CAPÍTULO I: PLANTEAMIENTO DEL PROBLEMA</h1>
+
+<h2 style="color:#3D271C;">1.1 Descripción de la realidad problemática</h2>
+<p>
+Aventura Vip de Cusco es una empresa dedicada al transporte de pasajeros en la
+ciela de Cusco. Su principal cliente es el grupo <b>Belmond</b>, para el cual
+brinda servicio de traslados a los huéspedes de los hoteles <b>Monastery</b> y
+<b>Palacio Nazarenas</b>. El servicio corporativo se factura mediante <b>vales de
+viaje</b> que Belmond paga mensualmente según la distancia recorrida. Además, la
+empresa atiende servicios externos cobrados en efectivo.
+</p>
+<p>
+Tras el análisis del proceso operativo, se identificaron los siguientes problemas
+críticos:
+</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>N°</th><th>Problema identificado</th><th>Consecuencia</th>
+  </tr>
+  <tr><td>1</td><td>Las reservas se solicitan por WhatsApp y teléfono</td><td>Errores de tipeo en nombres, destinos y horarios; pérdida de información.</td></tr>
+  <tr><td>2</td><td>Los vales de viaje se emiten en papel</td><td>Se pierden o se dañan; dificulta la conciliación mensual con Belmond.</td></tr>
+  <tr><td>3</td><td>Los documentos de la flota están desorganizados</td><td>SOAT, revisiones técnicas y seguros sin control de vigencia.</td></tr>
+  <tr><td>4</td><td>No existe gestión de conductores</td><td>Desconocimiento de disponibilidad, horarios y desempeño.</td></tr>
+  <tr><td>5</td><td>La cola nocturna (despacho a las 10:30 pm) no se respeta</td><td>Conflictos entre conductores y despacho injusto.</td></tr>
+  <tr><td>6</td><td>Los servicios en efectivo no se controlan</td><td>Pérdidas financieras y falta de registro de ingresos.</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">1.2 Formulación del problema</h2>
+<h3 style="color:#333;">Problema general</h3>
+<p>
+¿De qué manera el diseño e implementación de un sistema de gestión de movilidad
+mejora el control operativo, la seguridad y la gestión financiera de la empresa
+Aventura Vip de Cusco?
+</p>
+<h3 style="color:#333;">Problemas específicos</h3>
+<ol>
+  <li>¿Cómo reducir los errores en el registro de reservas de servicio?</li>
+  <li>¿Cómo digitalizar el control de los vales de viaje de Belmond?</li>
+  <li>¿Cómo organizar la documentación de la flota y la gestión de conductores?</li>
+  <li>¿Cómo garantizar el respeto del orden de despacho en la cola nocturna?</li>
+  <li>¿Cómo asegurar que solo personal autorizado acceda al sistema?</li>
+</ol>
+
+<h2 style="color:#3D271C;">1.3 Objetivos de la investigación</h2>
+<h3 style="color:#333;">Objetivo general</h3>
+<p>
+Diseñar e implementar un sistema de gestión de movilidad multiplataforma para la
+empresa Aventura Vip de Cusco, que permita automatizar el registro de reservas,
+el control de vales, la gestión de flota y conductores, el despacho de la cola
+nocturna y el control financiero, garantizando la seguridad de la información.
+</p>
+<h3 style="color:#333;">Objetivos específicos</h3>
+<ol>
+  <li>Implementar un módulo de autenticación seguro (login) basado en tokens JWT
+      y claves cifradas con bcrypt.</li>
+  <li>Diseñar una base de datos relacional normalizada que soporte usuarios,
+      roles, permisos, empresas y áreas.</li>
+  <li>Implementar un modelo de control de acceso basado en permisos dinámicos
+      (PBAC) que permita administradores con acceso total o parcial.</li>
+  <li>Diseñar una arquitectura escalable que permita incorporar módulos de
+      reservas, flota, conductores, cola nocturna y finanzas.</li>
+  <li>Validar el funcionamiento del sistema mediante pruebas de extremo a extremo
+      (base de datos, API y consumo REST).</li>
+</ol>
+
+<h2 style="color:#3D271C;">1.4 Justificación e importancia</h2>
+<p>
+La investigación se justifica desde tres perspectivas:
+</p>
+<ul>
+  <li><b>Justificación práctica:</b> la empresa necesita resolver problemas
+      operativos que generan pérdidas económicas y afectan su relación con el
+      cliente Belmond. El sistema automatiza los procesos manuales y reduce
+      errores.</li>
+  <li><b>Justificación tecnológica:</b> se aplican tecnologías modernas y
+      robustas (PostgreSQL, Node.js, React) sobre una arquitectura con lógica de
+      negocio en base de datos, lo que garantiza integridad, rendimiento y
+      seguridad.</li>
+  <li><b>Justificación académica:</b> el proyecto integra conocimientos de
+      ingeniería de software, bases de datos, arquitectura de software, seguridad
+      informática y desarrollo web, demostrando competencias profesionales.</li>
+</ul>
+
+<h2 style="color:#3D271C;">1.5 Alcance y limitaciones</h2>
+<p>
+El alcance del presente trabajo cubre el análisis, diseño e implementación del
+módulo de autenticación, junto con el diseño completo del esquema de base de
+datos y la arquitectura del sistema. Las fases de reservas, flota, conductores,
+cola nocturna y finanzas forman parte del diseño y se desarrollarán en etapas
+posteriores.
+</p>
+<p>
+Las principales limitaciones son la disponibilidad de tiempo para el desarrollo
+de todos los módulos y el acceso limitado a la información financiera detallada
+de la empresa por políticas de confidencialidad.
+</p>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- CAPÍTULO II                                                    -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">CAPÍTULO II: MARCO TEÓRICO</h1>
+
+<h2 style="color:#3D271C;">2.1 Antecedentes de la investigación</h2>
+<p>
+Existen diversos trabajos relacionados con sistemas de gestión de transporte y
+movilidad. Plataformas como Uber, Cabify y DiDi han demostrado la viabilidad de
+los sistemas de despacho de vehículos basados en aplicaciones móviles. Sin
+embargo, la mayoría de estas plataformas están orientadas al mercado de consumo
+masivo y no cubren las necesidades específicas de las empresas de taxi
+tradicionales que atienden clientes corporativos mediante vales y crédito
+mensual, como es el caso de Aventura Vip de Cusco.
+</p>
+<p>
+En el ámbito local, la mayoría de empresas de transporte de Cusco operan con
+herramientas genéricas (hojas de cálculo y mensajería instantánea), lo que
+evidencia la necesidad de soluciones a medida que integren reservas, flota,
+conductores y finanzas en una sola plataforma.
+</p>
+
+<h2 style="color:#3D271C;">2.2 Bases teóricas</h2>
+
+<h3 style="color:#3D271C;">2.2.1 Patrón Modelo-Vista-Controlador (MVC)</h3>
+<p>
+El patrón MVC (Model-View-Controller) es un estilo de arquitectura de software
+que separa la aplicación en tres componentes lógicos:
+</p>
+<ul>
+  <li><b>Modelo (Model):</b> gestiona los datos, el estado y las reglas de
+      negocio. En el presente proyecto corresponde a la base de datos PostgreSQL,
+      incluyendo las tablas y los procedimientos almacenados (SP_LOGIN, etc.).</li>
+  <li><b>Vista (View):</b> es la interfaz de usuario. Corresponde al frontend en
+      React, que presenta los datos y captura la interacción del usuario.</li>
+  <li><b>Controlador (Controller):</b> actúa como intermediario entre la Vista y
+      el Modelo. Recibe las peticiones HTTP, invoca los procedimientos de la base
+      de datos y devuelve las respuestas. En el proyecto corresponde al servidor
+      Express con TypeScript.</li>
+</ul>
+<p>
+La separación de responsabilidades del patrón MVC permite que la Vista pueda
+cambiarse (por ejemplo, pasar de una aplicación web a una app móvil) sin
+modificar el Modelo ni el Controlador.
+</p>
+
+<h3 style="color:#3D271C;">2.2.2 Arquitectura multicapa</h3>
+<p>
+La arquitectura multicapa organiza el sistema en capas con responsabilidades
+claramente definidas:
+</p>
+<ul>
+  <li><b>Capa de presentación:</b> la interfaz de usuario (React).</li>
+  <li><b>Capa de aplicación o transporte:</b> la API REST (Node.js + Express).</li>
+  <li><b>Capa de datos:</b> la base de datos (PostgreSQL 15).</li>
+</ul>
+
+<h3 style="color:#3D271C;">2.2.3 Arquitectura con lógica de negocio en base de datos (SP-Centric)</h3>
+<p>
+En esta arquitectura, la lógica de negocio vive en <b>procedimientos
+almacenados</b> (stored procedures) dentro de la base de datos. La API se
+convierte en una "capa fina" que únicamente recibe peticiones HTTP, llama a los
+procedimientos y devuelve los resultados. Sus ventajas son:
+</p>
+<ul>
+  <li><b>Rendimiento:</b> la lógica se ejecuta cerca de los datos, reduciendo la
+      latencia de red.</li>
+  <li><b>Integridad:</b> las transacciones y validaciones se ejecutan de forma
+      atómica en la base de datos.</li>
+  <li><b>Seguridad:</b> la API no tiene permisos directos sobre las tablas, solo
+      de ejecución sobre procedimientos autorizados, lo que mitiga la inyección
+      SQL.</li>
+  <li><b>Consistencia:</b> al concentrar la lógica, cualquier cliente (web,
+      móvil, API) obtiene el mismo comportamiento.</li>
+</ul>
+
+<h3 style="color:#3D271C;">2.2.4 Monolito modular</h3>
+<p>
+Un monolito modular es una aplicación única desplegada como un solo servicio,
+pero organizada internamente en módulos independientes (auth, reservas, flota,
+conductores, finanzas). Combina la simplicidad de despliegue del monolito con la
+claridad y mantenibilidad de la modularidad.
+</p>
+
+<h3 style="color:#3D271C;">2.2.5 Autenticación con tokens JWT</h3>
+<p>
+Los JSON Web Tokens (JWT) son tokens firmados digitalmente que permiten
+autenticar y autorizar peticiones sin almacenar sesiones en el servidor. El
+token contiene el identificador del usuario, su rol y sus permisos, y se firma
+con una clave secreta. El presente sistema emite tokens con una vigencia de 12
+horas.
+</p>
+
+<h3 style="color:#3D271C;">2.2.6 Control de acceso basado en permisos (PBAC)</h3>
+<p>
+A diferencia del control de acceso basado en roles (RBAC) tradicional, el modelo
+PBAC asigna <b>permisos específicos</b> a cada usuario. Esto permite que existan
+administradores con acceso parcial, y que el sistema crezca agregando nuevas
+filas de permisos sin modificar el código.
+</p>
+
+<h3 style="color:#3D271C;">2.2.7 Cifrado de contraseñas con bcrypt</h3>
+<p>
+bcrypt es una función de hash de contraseñas basada en el algoritmo Blowfish,
+que incluye un factor de trabajo configurable ("salt") que dificulta los ataques
+de fuerza bruta. En el proyecto se usa a través de la extensión <b>pgcrypto</b>
+de PostgreSQL con la función <code>crypt()</code> y el generador de salt
+<code>gen_salt('bf', 8)</code>.
+</p>
+
+<h2 style="color:#3D271C;">2.3 Marco conceptual</h2>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Término</th><th>Definición</th>
+  </tr>
+  <tr><td>API REST</td><td>Interfaz de programación basada en HTTP que sigue los principios de representación de estado.</td></tr>
+  <tr><td>Vale de viaje</td><td>Comprobante emitido por el servicio corporativo que se paga mensualmente según la distancia.</td></tr>
+  <tr><td>Cola nocturna</td><td>Orden de despacho de vehículos al cierre del servicio diario (10:30 pm).</td></tr>
+  <tr><td>Flota</td><td>Conjunto de vehículos de la empresa con su documentación (SOAT, revisiones).</td></tr>
+  <tr><td>Despacho</td><td>Asignación de un conductor a un servicio solicitado.</td></tr>
+</table>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- CAPÍTULO III                                                   -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">CAPÍTULO III: METODOLOGÍA</h1>
+
+<h2 style="color:#3D271C;">3.1 Tipo y diseño de investigación</h2>
+<p>
+La investigación es de tipo <b>aplicada</b>, ya que busca resolver un problema
+práctico de la empresa mediante la aplicación de conocimientos tecnológicos. El
+enfoque es <b>cuantitativo</b> complementado con técnicas cualitativas de
+observación, y el diseño es <b>no experimental-transversal</b>, orientado al
+desarrollo e implementación de un producto tecnológico.
+</p>
+
+<h2 style="color:#3D271C;">3.2 Metodología de desarrollo de software</h2>
+<p>
+Para el desarrollo del sistema se utiliza una metodología <b>ágil e incremental
+adaptada</b>, inspirada en Scrum y XP, dado que el proyecto avanza por fases
+funcionales:
+</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Fase</th><th>Descripción</th><th>Estado</th>
+  </tr>
+  <tr><td>Fase 1 - Autenticación</td><td>Esquema de BD, login seguro, tokens JWT y control de permisos.</td><td><b>Completada</b></td></tr>
+  <tr><td>Fase 2 - Gestión de usuarios</td><td>CRUD de usuarios, empresas y áreas.</td><td>Pendiente</td></tr>
+  <tr><td>Fase 3 - Reservas</td><td>Registro de servicios y control de vales.</td><td>Pendiente</td></tr>
+  <tr><td>Fase 4 - Flota y conductores</td><td>Vehículos, documentos y disponibilidad.</td><td>Pendiente</td></tr>
+  <tr><td>Fase 5 - Cola nocturna y GPS</td><td>Despacho ordenado y ubicación de vehículos.</td><td>Pendiente</td></tr>
+  <tr><td>Fase 6 - Finanzas</td><td>Reportes de vales y servicios en efectivo.</td><td>Pendiente</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">3.3 Técnicas e instrumentos de recolección de datos</h2>
+<ul>
+  <li><b>Observación directa:</b> se observaron los procesos operativos de la
+      empresa (toma de reservas, despacho, manejo de vales).</li>
+  <li><b>Entrevistas:</b> entrevistas no estructuradas al personal administrativo
+      y operativo.</li>
+  <li><b>Análisis documental:</b> revisión de vales de viaje, registros de la
+      flota y reportes financieros.</li>
+  <li><b>Pruebas de software:</b> pruebas funcionales de la API REST mediante
+      curl y verificación directa de los procedimientos almacenados.</li>
+</ul>
+
+<h2 style="color:#3D271C;">3.4 Población y muestra</h2>
+<p>
+La población está conformada por el personal de Aventura Vip de Cusco: personal
+administrativo, operadores, conductores y usuarios del servicio. Para las
+pruebas se utilizó una muestra representativa que incluye cuentas de prueba de
+los cuatro roles del sistema (ADMIN, OPERADOR, CONDUCTOR, USUARIO).
+</p>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- CAPÍTULO IV                                                    -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">CAPÍTULO IV: TECNOLOGÍAS Y HERRAMIENTAS</h1>
+
+<h2 style="color:#3D271C;">4.1 Stack tecnológico</h2>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Capa</th><th>Tecnología</th><th>Rol en el sistema</th>
+  </tr>
+  <tr><td>Base de datos</td><td>PostgreSQL 15 (Docker)</td><td>Almacenamiento, procedimientos almacenados (100% SP-Centric) y triggers de auditoría.</td></tr>
+  <tr><td>Backend</td><td>Node.js + Express + TypeScript</td><td>API REST, middleware de autenticación JWT, permisos (PBAC) y rate limit.</td></tr>
+  <tr><td>Frontend</td><td>React + Vite + TypeScript</td><td>SPA con dashboard integral: login, gestión de usuarios y organización.</td></tr>
+  <tr><td>Estilos</td><td>Tailwind CSS</td><td>Diseño responsive con la paleta oficial de la marca (negro, marrón #3D271C y ámbar #C17C26).</td></tr>
+  <tr><td>Iconografía</td><td>lucide-react</td><td>Iconos del menú lateral y de la interfaz.</td></tr>
+  <tr><td>Tipografía</td><td>Azonix + Caviar Dreams</td><td>Azonix (títulos/lujo) y Caviar Dreams (texto), servidas en WOFF2.</td></tr>
+  <tr><td>PWA</td><td>vite-plugin-pwa (Service Worker + manifest)</td><td>Aplicación instalable en el celular y funcional sin conexión.</td></tr>
+  <tr><td>Autenticación</td><td>JSON Web Tokens (JWT)</td><td>Emisión y validación de tokens de acceso (12 horas).</td></tr>
+  <tr><td>Cifrado</td><td>bcrypt (pgcrypto)</td><td>Cifrado de contraseñas en la base de datos.</td></tr>
+  <tr><td>Seguridad HTTP</td><td>helmet + express-rate-limit</td><td>Cabeceras seguras y límite de intentos de login (anti fuerza bruta).</td></tr>
+  <tr><td>Pruebas</td><td>vitest + supertest</td><td>35 pruebas de integración automatizadas contra la BD real.</td></tr>
+  <tr><td>Contenedores</td><td>Docker</td><td>Despliegue del servidor de base de datos.</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">4.2 Justificación de las tecnologías elegidas</h2>
+<ul>
+  <li><b>PostgreSQL 15:</b> sistema de gestión de bases de datos relacional de
+      código abierto, robusto, con soporte completo de procedimientos almacenados
+      (PL/pgSQL), triggers, JSONB y la extensión pgcrypto.</li>
+  <li><b>Node.js con Express:</b> plataforma asíncrona de alto rendimiento ideal
+      para APIs REST. TypeScript añade tipado estático que mejora la calidad y el
+      mantenimiento del código.</li>
+  <li><b>React:</b> biblioteca para construir interfaces de usuario modernas y
+      escalables; combinado con Vite y Tailwind CSS permite una SPA rápida y
+      adaptada a plataformas móviles.</li>
+  <li><b>PWA (Progressive Web App):</b> con vite-plugin-pwa la aplicación genera
+      un manifest y un service worker, lo que la hace instalable en el celular
+      y usable sin conexión, ideal para conductores en zonas con poca señal.</li>
+  <li><b>JWT:</b> estándar ampliamente aceptado para autenticación sin estado,
+      ideal para arquitecturas REST y multiplataforma.</li>
+  <li><b>helmet y express-rate-limit:</b> el primero endurece las cabeceras HTTP
+      (CSP, X-Frame-Options, HSTS); el segundo limita los intentos de inicio de
+      sesión por IP (HTTP 429) para mitigar ataques de fuerza bruta.</li>
+  <li><b>vitest + supertest:</b> permiten ejecutar pruebas de integración contra
+      la base de datos real y los procedimientos almacenados, garantizando que la
+      lógica de negocio funciona antes de cada entrega.</li>
+  <li><b>Docker:</b> facilita el despliegue y la reproducibilidad del entorno,
+      especialmente de la base de datos.</li>
+</ul>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- CAPÍTULO V                                                     -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">CAPÍTULO V: ARQUITECTURA Y DISEÑO DEL SISTEMA</h1>
+
+<h2 style="color:#3D271C;">5.1 Arquitectura de software propuesta</h2>
+<p>
+La arquitectura elegida es una <b>arquitectura multicapa con lógica de negocio
+centrada en la base de datos (SP-Centric)</b>, combinada con un <b>monolito
+modular</b> en el backend. El flujo de una petición es el siguiente:
+</p>
+<pre>
+  Cliente (React / curl / app móvil)
+      |
+      | 1. POST /api/auth/login  {correo_o_dni, clave}
+      v
+  Capa de aplicación - Servidor Node.js (Express + TypeScript)
+      |  - Enrutamiento HTTP
+      |  - Validación de formato
+      |  - Middleware JWT y permisos
+      |
+      | 2. SELECT SP_LOGIN($1, $2)
+      v
+  Capa de datos - PostgreSQL 15
+      |  - Tablas (USUARIOS, ROLES, PERMISOS, ...)
+      |  - Procedimientos almacenados (SP_LOGIN, SP_VALIDAR_USUARIO, ...)
+      |  - Triggers de auditoría
+      |
+      | 3. Respuesta JSONB (datos + permisos)
+      v
+  Servidor: firma el token JWT y responde HTTP 200
+      |
+      | 4. { token, expira_en, usuario }
+      v
+  Cliente: guarda el token y lo envía en cada petición
+      |
+      | 5. GET /api/auth/me  (Authorization: Bearer &lt;token&gt;)
+      v
+  Middleware autenticarToken valida la firma y expiración
+</pre>
+
+<h3 style="color:#3D271C;">5.1.1 Ventajas de la arquitectura para el proyecto</h3>
+<ul>
+  <li><b>Rendimiento:</b> la lógica se ejecuta en la base de datos, evitando
+      viajes de ida y vuelta innecesarios entre API y BD.</li>
+  <li><b>Seguridad:</b> la API solo ejecuta procedimientos autorizados; las
+      claves se cifran y nunca se exponen.</li>
+  <li><b>Escalabilidad:</b> nuevos módulos se agregan sin reescribir la
+      arquitectura.</li>
+  <li><b>Portabilidad:</b> el mismo backend sirve a aplicaciones web y móviles.</li>
+  <li><b>Auditoría:</b> los triggers registran automáticamente quién y cuándo
+      modificó cada registro.</li>
+</ul>
+
+<h2 style="color:#3D271C;">5.2 Diseño de la base de datos</h2>
+<p>
+El esquema relacional está conformado por siete tablas organizadas en una
+<b>jerarquía de tres niveles</b>: las <b>EMPRESAS</b> contienen
+<b>ESTABLECIMIENTOS</b> (hoteles, tiendas o restaurantes) y cada establecimiento
+contiene sus <b>AREAS</b> (recepción, cocina, etc.). El modelo es extensible:
+en el futuro se pueden agregar más empresas y cada una con sus propias cadenas.
+</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Tabla</th><th>Descripción</th><th>Campos principales</th>
+  </tr>
+  <tr><td>ROLES</td><td>Roles del sistema.</td><td>NOMBRE, DESCRIPCION</td></tr>
+  <tr><td>EMPRESAS</td><td>Organizaciones (Aventura Vip de Cusco, Belmond, Particular).</td><td>NOMBRE, RUC, TELEFONO, DIRECCION, ESTADO</td></tr>
+  <tr><td>ESTABLECIMIENTOS</td><td>Sedes de una empresa (hoteles de Belmond: Monasterio, Palacio Nazarenas, Rio Sagrado).</td><td>EMPRESA_ID, NOMBRE, DESCRIPCION, ESTADO</td></tr>
+  <tr><td>AREAS</td><td>Sub-áreas de un establecimiento (Recepción, A&B, Cocina, Housekeeping).</td><td>ESTABLECIMIENTO_ID, NOMBRE, DESCRIPCION, ESTADO</td></tr>
+  <tr><td>USUARIOS</td><td>Todas las personas del sistema.</td><td>NOMBRES, APELLIDOS, DNI, CORREO, CLAVE, ROL_ID, EMPRESA_ID, AREA_ID, PUEDE_RESERVAR, CODIGO_SECRETO, ESTADO</td></tr>
+  <tr><td>PERMISOS</td><td>Catálogo de permisos (PBAC).</td><td>CODIGO, DESCRIPCION</td></tr>
+  <tr><td>USUARIOS_PERMISOS</td><td>Asignación N:M de permisos a usuarios.</td><td>USUARIO_ID, PERMISO_ID</td></tr>
+</table>
+<p>
+Todas las tablas incluyen campos de auditoría: <code>CREADO_AT</code>,
+<code>CREADO_POR</code>, <code>MODIFICADO_AT</code> y
+<code>MODIFICADO_POR</code>. El trigger <code>SP_ACTUALIZAR_MODIFICADO_AT</code>
+actualiza automáticamente la fecha de modificación en cada edición.
+</p>
+
+<h3 style="color:#3D271C;">5.2.1 Procedimientos almacenados</h3>
+<p>
+Siguiendo la arquitectura <b>SP-Centric</b>, el 100% de las consultas a la base
+de datos se ejecutan mediante procedimientos almacenados (los controladores de
+la API no contienen SQL directo). Los principales son:
+</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Procedimiento</th><th>Función</th>
+  </tr>
+  <tr><td>SP_REGISTRAR_USUARIO</td><td>Crea usuarios cifrando la clave con bcrypt.</td></tr>
+  <tr><td>SP_LOGIN</td><td>Valida credenciales según el tipo de cuenta (DNI para trabajadores, correo para la app pública) y devuelve datos y permisos.</td></tr>
+  <tr><td>SP_VALIDAR_USUARIO</td><td>Verifica que un usuario siga activo.</td></tr>
+  <tr><td>SP_ACTUALIZAR_USUARIO</td><td>Edita datos de un usuario; cambia la clave solo si se envía una nueva.</td></tr>
+  <tr><td>SP_LISTAR_USUARIOS / SP_OBTENER_USUARIO</td><td>Listado con búsqueda/filtros y detalle con permisos.</td></tr>
+  <tr><td>SP_CAMBIAR_ESTADO_USUARIO</td><td>Activa o inactiva (bloquea) un usuario.</td></tr>
+  <tr><td>SP_ASIGNAR_PERMISO / SP_QUITAR_PERMISO / SP_REEMPLAZAR_PERMISOS</td><td>Administración de permisos por usuario (checkboxes).</td></tr>
+  <tr><td>SP_GUARDAR_EMPRESA / SP_GUARDAR_ESTABLECIMIENTO / SP_GUARDAR_AREA</td><td>Crean o editan los catálogos de la organización.</td></tr>
+  <tr><td>SP_CAMBIAR_ESTADO_* (EMPRESA/ESTABLECIMIENTO/AREA)</td><td>Activa o inactiva cada entidad de la organización.</td></tr>
+  <tr><td>SP_LISTAR_EMPRESAS / SP_LISTAR_ESTABLECIMIENTOS / SP_LISTAR_AREAS</td><td>Listados de gestión con conteos (establecimientos por empresa, áreas por establecimiento).</td></tr>
+  <tr><td>SP_OBTENER_CATALOGOS</td><td>Devuelve roles, empresas, establecimientos, áreas y permisos en un único JSONB.</td></tr>
+  <tr><td>SP_OBTENER_ROL_POR_NOMBRE</td><td>Devuelve el ID de un rol (valida que la operadora solo cree clientes).</td></tr>
+  <tr><td>SP_ACTUALIZAR_MODIFICADO_AT</td><td>Trigger: actualiza la fecha de modificación.</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">5.3 Diseño del módulo de autenticación</h2>
+<p>
+El módulo de autenticación implementa dos endpoints:
+</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Endpoint</th><th>Método</th><th>Protegido</th><th>Función</th>
+  </tr>
+  <tr><td>/api/auth/login</td><td>POST</td><td>No (con rate limit)</td><td>Inicia sesión y devuelve el token JWT.</td></tr>
+  <tr><td>/api/auth/me</td><td>GET</td><td>Sí</td><td>Devuelve los datos del usuario autenticado.</td></tr>
+</table>
+<p>
+<b>Regla de identificador de acceso.</b> El identificador depende del tipo de
+cuenta, y se valida dentro del procedimiento <code>SP_LOGIN</code>:
+</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Tipo de cuenta</th><th>Identificador de acceso</th>
+  </tr>
+  <tr><td>Trabajadores de Aventura Vip (ADMIN, OPERADOR, CONDUCTOR)</td><td>DNI (8 dígitos)</td></tr>
+  <tr><td>Trabajadores de hoteles (Belmond)</td><td>DNI (8 dígitos)</td></tr>
+  <tr><td>App pública estilo Uber (empresa "Particular")</td><td>Correo electrónico</td></tr>
+</table>
+<p>
+El login está protegido con <b>rate limit</b> (5 intentos por IP por minuto);
+al superarlo, la API responde HTTP 429.
+</p>
+
+<h2 style="color:#3D271C;">5.4 Modelo de seguridad (roles y permisos)</h2>
+<p>
+El sistema define cuatro roles: <b>ADMIN</b>, <b>OPERADOR</b>, <b>CONDUCTOR</b> y
+<b>USUARIO</b>. Adicionalmente, se implementa un catálogo de <b>9 permisos
+dinámicos (PBAC)</b> que se asignan a cada usuario mediante checkboxes. Esto
+permite que existan administradores parciales (por ejemplo, un admin que solo
+ve finanzas, u otro que solo gestiona reservas):
+</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Código</th><th>Descripción</th>
+  </tr>
+  <tr><td>GESTIONAR_USUARIOS</td><td>Crear y editar usuarios (gestión completa).</td></tr>
+  <tr><td>CREAR_USUARIOS</td><td>Crear y editar cuentas de clientes (rol USUARIO) - asignado a la operadora.</td></tr>
+  <tr><td>GESTIONAR_CATALOGOS</td><td>Gestionar empresas, establecimientos y áreas (solo admin).</td></tr>
+  <tr><td>VER_FINANZAS</td><td>Ver reportes financieros.</td></tr>
+  <tr><td>GESTIONAR_FLOTA</td><td>Gestionar la flota de vehículos.</td></tr>
+  <tr><td>GESTIONAR_CONDUCTORES</td><td>Gestionar conductores.</td></tr>
+  <tr><td>CREAR_RESERVAS</td><td>Crear reservas de viajes.</td></tr>
+  <tr><td>DESPACHAR_COLA</td><td>Ordenar la cola de la noche.</td></tr>
+  <tr><td>VER_GPS</td><td>Ver la ubicación de los vehículos en tiempo real.</td></tr>
+</table>
+<p>
+Al crear un usuario, elegir su rol <b>pre-marca automáticamente</b> el conjunto
+de permisos recomendado (siempre editable): ADMIN recibe los 9, OPERADOR los
+operativos (incluido CREAR_USUARIOS), CONDUCTOR el GPS, y USUARIO ninguno
+(la opción de reservar se concede con el campo "Puede reservar viajes").
+El menú lateral se filtra automáticamente según los permisos de la sesión.
+</p>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- 5.5 DASHBOARD INTEGRAL                                        -->
+<!-- ============================================================ -->
+<h2 style="color:#3D271C;">5.5 Dashboard integral</h2>
+<p>
+El sistema cuenta con un <b>dashboard de gestión integral</b> con un menú
+lateral de navegación principal basado en iconos (lucide-react):
+</p>
+<ul>
+  <li><b>Estructura del menú:</b> módulos con iconos reconocibles (Inicio,
+      Usuarios, Organización, Configuración) y soporte para submenús anidados.</li>
+  <li><b>Estados interactivos:</b> ítems activos (fondo ámbar + borde dorado),
+      hover, deshabilitados sin permiso e indicadores de notificaciones
+      (badges con contador).</li>
+  <li><b>Responsive:</b> en escritorio la barra lateral queda expandida; en
+      tablet se colapsa a iconos; en móvil se convierte en drawer deslizante
+      con menú hamburguesa.</li>
+  <li><b>Personalización:</b> modo oscuro/claro (persistido), accesos directos
+      favoritos con estrella y módulos ocultos automáticamente según el rol.</li>
+  <li><b>Accesibilidad:</b> navegación por teclado (flechas arriba/abajo),
+      aria-expanded, aria-current y contraste AA.</li>
+  <li><b>Área de contenido:</b> widgets KPI, tablas, formularios y estados de
+      carga/error consistentes con la identidad de la marca.</li>
+</ul>
+
+<h2 style="color:#3D271C;">5.6 Módulo de gestión de usuarios</h2>
+<p>
+El módulo de usuarios implementa el ciclo completo: <b>crear, listar, editar,
+activar/inactivar y administrar permisos</b>.
+</p>
+<ul>
+  <li><b>Listado:</b> tabla con búsqueda (nombre, correo o DNI), filtros por
+      rol y estado, y acciones por fila.</li>
+  <li><b>Formulario (alta y edición):</b> una sola columna, agrupado por
+      secciones (datos personales, contacto, organización y acceso,
+      contraseña, permisos), con validación en tiempo real, checklist de
+      requisitos de contraseña e indicador de fortaleza.</li>
+  <li><b>Cascada empresa - establecimiento - área:</b> al elegir una empresa
+      con establecimientos (como Belmond), el establecimiento y el área son
+      obligatorios; para Aventura Vip y la app pública quedan opcionales.</li>
+  <li><b>Accesos por rol:</b> la operadora (permiso CREAR_USUARIOS) puede
+      crear y editar únicamente cuentas de clientes (rol USUARIO); el admin
+      gestiona cualquier cuenta.</li>
+</ul>
+
+<h2 style="color:#3D271C;">5.7 Módulo de organización (catálogos de negocio)</h2>
+<p>
+El módulo de organización permite gestionar el catálogo de negocio de forma
+extensible: <b>empresas, establecimientos y áreas</b>. En Belmond los
+establecimientos son hoteles (Hotel Monasterio, Palacio Nazarenas, Rio
+Sagrado); en otra empresa podrían ser restaurantes, tiendas u otras sedes, y
+cada una con sus propias áreas. Solo el ADMIN gestiona estos catálogos
+(permiso GESTIONAR_CATALOGOS), mediante tablas con creación, edición y
+activación/desactivación por entidad.
+</p>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- CAPÍTULO VI                                                    -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">CAPÍTULO VI: RESULTADOS Y ESTADO DEL DESARROLLO</h1>
+
+<h2 style="color:#3D271C;">6.1 Resultados obtenidos</h2>
+<p>
+Al cierre del presente informe se han implementado y verificado la <b>Fase 1
+(autenticación)</b> y la <b>Fase 2 (dashboard integral, gestión de usuarios y
+organización)</b>. El proyecto cuenta con <b>35 pruebas de integración
+automatizadas</b> (vitest + supertest) ejecutadas contra la base de datos real;
+todas pasan. Entre los resultados más relevantes:
+</p>
+<table border="1" cellpadding="5" style="border-collapse:collapse; font-size:10pt;">
+  <tr style="background:#3D271C; color:#fff;">
+    <th>Prueba</th><th>Resultado esperado</th><th>Resultado obtenido</th>
+  </tr>
+  <tr><td>Login de trabajador por DNI</td><td>HTTP 200 con token</td><td>Correcto</td></tr>
+  <tr><td>Login de trabajador por correo</td><td>HTTP 401 (regla DNI)</td><td>Correcto</td></tr>
+  <tr><td>Login de app pública (Particular) por correo</td><td>HTTP 200 con token</td><td>Correcto</td></tr>
+  <tr><td>Clave incorrecta</td><td>HTTP 401</td><td>Correcto</td></tr>
+  <tr><td>Inyección SQL en el login</td><td>HTTP 401 (nunca 200)</td><td>Correcto</td></tr>
+  <tr><td>Rate limit del login (6º intento)</td><td>HTTP 429</td><td>Correcto</td></tr>
+  <tr><td>Acceso /me sin token / token manipulado</td><td>HTTP 401</td><td>Correcto</td></tr>
+  <tr><td>Listar usuarios sin permiso</td><td>HTTP 403</td><td>Correcto</td></tr>
+  <tr><td>Operadora crea cliente (rol USUARIO)</td><td>HTTP 201</td><td>Correcto</td></tr>
+  <tr><td>Operadora intenta crear ADMIN</td><td>HTTP 403</td><td>Correcto</td></tr>
+  <tr><td>Editar usuario sin tocar su contraseña</td><td>HTTP 200 y login sigue válido</td><td>Correcto</td></tr>
+  <tr><td>Bloquear usuario (INACTIVO)</td><td>Login posterior HTTP 401</td><td>Correcto</td></tr>
+  <tr><td>CRUD de empresas/establecimientos/áreas</td><td>HTTP 201/200</td><td>Correcto</td></tr>
+  <tr><td>Organización sin permiso GESTIONAR_CATALOGOS</td><td>HTTP 403</td><td>Correcto</td></tr>
+  <tr><td>Catálogos con la jerarquía completa</td><td>9 permisos, 3 establecimientos, 12 áreas</td><td>Correcto</td></tr>
+  <tr><td>PWA: manifest y Service Worker</td><td>manifest.webmanifest y sw.js generados en el build</td><td>Correcto</td></tr>
+</table>
+
+<h2 style="color:#3D271C;">6.2 Estructura del proyecto desarrollado</h2>
+<pre>
+aventura-vip/
++-- AGENTS.md                  # Guías de trabajo para agentes IA
++-- .gitignore                 # Excluye node_modules, .env y secretos
++-- back-end/
+|   +-- .env / .env.example    # Variables de entorno (plantilla incluida)
+|   +-- package.json           # Dependencias y scripts (db:init completo)
+|   +-- db/
+|   |   +-- 00_SCHEMA.SQL        # Esquema: 7 tablas e índices
+|   |   +-- 01_PROCEDURES.SQL    # SP_LOGIN, SP_REGISTRAR_USUARIO, ...
+|   |   +-- 02_AUDIT_TRIGGER.SQL # Triggers de auditoría
+|   |   +-- 03_SEEDS.SQL         # Datos iniciales (9 permisos, cuentas demo)
+|   |   +-- 05_USUARIOS_CRUD.SQL # CRUD de usuarios (SPs)
+|   |   +-- 06_ORGANIZACION.SQL  # Empresas, establecimientos, áreas (SPs)
+|   |   +-- 07_SP_EXTRA.SQL      # SP_OBTENER_CATALOGOS, SP_OBTENER_ROL
+|   +-- tests/                 # 35 pruebas de integración (vitest)
+|   +-- src/
+|       +-- server.ts          # Punto de entrada
+|       +-- app.ts             # Aplicación Express (helmet, CORS, rutas)
+|       +-- config/            # database.ts y env.ts
+|       +-- middlewares/       # JWT, permisos (PBAC) y errores
+|       +-- controllers/       # auth, usuarios, catalogos, organizacion
+|       +-- routes/            # auth, usuarios, catalogos, organizacion
+|       +-- modules/           # Tipos y contratos por módulo
++-- front-end/
+    +-- vite.config.ts         # Vite + PWA + proxy /api + darkMode
+    +-- public/                # Logo.svg, iconos PWA y fuentes (WOFF2)
+    +-- src/
+        +-- config/            # api.ts, navegacion.tsx, presets.ts
+        +-- context/           # Tema (oscuro/claro), favoritos, navegación
+        +-- hooks/             # usePermisos, useMediaQuery
+        +-- layouts/           # DashboardLayout, Sidebar, Header
+        +-- services/          # auth, usuarios, organizacion
+        +-- router/            # Rutas protegidas por token y permisos
+        +-- pages/             # Login, Inicio, Usuarios, UsuarioForm, Organizacion, Perfil
+        +-- components/        # Loader, LogoVip, CampoFormulario, ui/
+        +-- types/             # Tipos de la API
+</pre>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- CONCLUSIONES                                                  -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">CONCLUSIONES</h1>
+<ol>
+  <li>Se implementó un módulo de autenticación seguro que valida el
+      identificador según el tipo de cuenta (DNI para los trabajadores de
+      Aventura Vip y de los hoteles; correo para la futura app pública),
+      cifra las contraseñas con bcrypt, emite tokens JWT de 12 horas y
+      protege el login con rate limit.</li>
+  <li>Se diseñó una base de datos relacional con una jerarquía extensible de
+      tres niveles (empresas, establecimientos y áreas), campos de auditoría
+      automáticos y más de 20 procedimientos almacenados: el 100% de las
+      consultas del backend se ejecutan mediante SPs (arquitectura
+      SP-Centric verificada).</li>
+  <li>El modelo de control de acceso por permisos (PBAC) con 9 permisos
+      asignables por checkboxes permite administradores totales o parciales y
+      define los límites de cada rol: la operadora crea y edita solo cuentas
+      de clientes, y el menú se adapta automáticamente a los permisos.</li>
+  <li>Se construyó un dashboard integral responsive con menú lateral por
+      iconos, modo oscuro/claro, favoritos y accesibilidad por teclado, que
+      unifica la experiencia de los módulos de usuarios y organización.</li>
+  <li>Las 35 pruebas de integración automatizadas confirmaron el correcto
+      funcionamiento de la autenticación, el CRUD de usuarios, los catálogos
+      de la organización y los casos de error (401, 403, 409 y 429).</li>
+</ol>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- RECOMENDACIONES                                                -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">RECOMENDACIONES</h1>
+<ol>
+  <li>Desarrollar la Fase 3: el módulo de reservas (tablero de la operadora,
+      asignación de conductores, vista del cliente con GPS del vehículo y
+      código de verificación) y el módulo de flota.</li>
+  <li>Desplegar el sistema en la nube (Netlify para el frontend y las
+      funciones serverless, y una base de datos gestionada como Neon o
+      Supabase) para que la PWA quede instalable por HTTPS desde el celular.</li>
+  <li>En producción, proteger la clave secreta JWT mediante un gestor de
+      secretos y restringir los orígenes CORS al dominio oficial.</li>
+  <li>Realizar capacitación al personal de Aventura Vip y de los hoteles de
+      Belmond para garantizar la adopción del sistema.</li>
+  <li>Documentar los nuevos módulos siguiendo la estructura y los estándares
+      ya establecidos en las Fases 1 y 2.</li>
+</ol>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ============================================================ -->
+<!-- REFERENCIAS                                                   -->
+<!-- ============================================================ -->
+<h1 style="color:#3D271C;">REFERENCIAS BIBLIOGRÁFICAS</h1>
+<ol>
+  <li>Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (1994). <i>Design
+      Patterns: Elements of Reusable Object-Oriented Software</i>. Addison-Wesley.</li>
+  <li>Jones, M., Bradley, J., & Sakimura, N. (2015). <i>JSON Web Token (JWT)</i>.
+      RFC 7519. IETF.</li>
+  <li>Provenzano, R., & Provost, A. (2018). <i>Full-Stack JavaScript: A Practical
+      Approach</i>. Packt Publishing.</li>
+  <li>Stonebraker, M. (2005). <i>Readings in Database Systems</i>. MIT Press.</li>
+  <li>The PostgreSQL Global Development Group. (2025). <i>PostgreSQL 15
+      Documentation</i>. https://www.postgresql.org/docs/</li>
+  <li>OpenJS Foundation. (2025). <i>Express.js Documentation</i>.
+      https://expressjs.com/</li>
+  <li>React Team. (2025). <i>React Documentation</i>. https://react.dev/</li>
+  <li>Hernández Sampieri, R., Fernández Collado, C., & Baptista Lucio, P. (2014).
+      <i>Metodología de la investigación</i>. McGraw-Hill.</li>
+</ol>
+
+</body>
+</html>

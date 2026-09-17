@@ -1,0 +1,15 @@
+{
+  "name": "aventura-vip",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de movilidad Aventura Vip de Cusco (monorepo backend + frontend).",
+  "scripts": {
+    "install:all": "npm --prefix back-end install && npm --prefix front-end install",
+    "build": "npm --prefix back-end run build && npm --prefix front-end run build",
+    "start": "node back-end/dist/server.js",
+    "db:init": "node back-end/db/init.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

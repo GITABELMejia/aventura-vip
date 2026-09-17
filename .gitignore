@@ -1,0 +1,21 @@
+# Dependencias
+node_modules/
+
+# Compilacion / builds
+dist/
+*.tsbuildinfo
+
+# Variables de entorno y secretos
+.env
+.env.local
+.env.production
+back-end/db/credenciales.txt
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs
+*.log
+npm-debug.log*

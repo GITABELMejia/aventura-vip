@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aventura Vip - Sistema de Movilidad</title>
+
+    <!-- ================================================================
+         METAS DE PWA
+         ------------------------------------------------------------------
+         1) theme-color      : color de la barra del navegador (marron chocolate oficial).
+         2) manifest         : vincula el manifest.json que genera VitePWA
+                               al hacer el build (gracias a VitePWA se sirve
+                               en /manifest.webmanifest).
+         3) apple-touch-icon : icono para "Añadir a pantalla de inicio"
+                               en iOS Safari.
+         4) favicon          : icono de la pestana del navegador.
+         ================================================================ -->
+    <meta name="theme-color" content="#3D271C" />
+    <link rel="preload" as="image" href="/Logo.svg" />
+    <meta property="og:title" content="Aventura Vip - Sistema de Movilidad" />
+    <meta property="og:description" content="Sistema de movilidad privada corporativa." />
+    <link rel="icon" type="image/png" href="/icono-192x192.png" />
+    <link rel="apple-touch-icon" href="/icono-apple.png" />
+  </head>
+  <body>
+    <!-- El contenedor raiz donde React monta toda la aplicacion. -->
+    <div id="root"></div>
+    <!-- El script principal que arranca React. -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
