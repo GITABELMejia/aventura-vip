@@ -31,6 +31,27 @@ npm run build && npm run preview    # :4173 PWA; preview.allowedHosts=true (tune
   `src/config/database.ts` y `db/init.js` (la URL NO necesita `?sslmode=`).
 - Inicializar la BD remota (una sola vez): `DATABASE_URL=... node back-end/db/init.js`.
 
+### Flujo de trabajo (local -> produccion)
+1. Desarrollar en local (Docker `av-test-pg` + `npm run dev` en back-end y front-end).
+   Nada de eso toca produccion.
+2. Probar "como produccion" (opcional): `npm run build && npm start` en la raiz -> :3000.
+3. Publicar: `git add . && git commit -m "..." && git push` -> el Action despliega solo.
+   Para cambios grandes usar rama: los push a ramas NO despliegan; al mergear a `main` si.
+- OJO: local y produccion usan BASES DISTINTAS. Si un cambio agrega/modifica SQL
+  (tablas, SPs), ejecutar tambien ese script en la BD de Seenode (incremental;
+  NO re-ejecutar `db:init`, que no es idempotente).
+
+### Separar frontend y backend (futuro, opcional)
+El repo ya esta preparado: `front-end/src/config/api.ts` usa `VITE_API_URL` si existe
+al compilar, y hay `vercel.json` (raiz) + `front-end/vercel.json` con rewrites SPA.
+1. Vercel: importar el repo (detecta `vercel.json`) y definir
+   `VITE_API_URL=https://aventura-vip.seenode.app/api` -> deploy.
+2. Seenode: `CORS_ORIGENES=https://<dominio-vercel>` (Environment) y redeploy.
+3. Verificar login/PWA desde el dominio de Vercel.
+Consideraciones: aparecen 2 URLs y CORS; los preview deployments de Vercel
+(subdominios aleatorios) quedan bloqueados por CORS salvo dominio propio.
+El backend puede seguir sirviendo la SPA como respaldo (no molesta).
+
 ## Base de datos (SP-Centric)
 Orden de inyeccion OBLIGATORIO (no es secuencial): 00_SCHEMA -> 02_AUDIT_TRIGGER -> 01_PROCEDURES -> 03_SEEDS.
 El `02` (trigger) debe ir antes del `01` (procedures). Toda la logica vive en stored procedures.
@@ -41,7 +62,8 @@ Identificadores SQL en MAYUSCULAS, sin comillas dobles. Usuarios demo clave `dem
   Copiar `.env.example` como plantilla. Otros: `CORS_ORIGENES` (origenes permitidos,
   separados por coma), `LOGIN_MAX_INTENTOS`/`LOGIN_VENTANA_MS` (rate limit del login).
 - Entry: `src/app.ts` (arranca Express). Middlewares: helmet + cors(restricto) + morgan.
-- Endpoints: POST /api/auth/login (con rate limit -> 429), GET /api/auth/me (JWT Bearer 12h).
+- Endpoints: GET /api (estado/health), POST /api/auth/login (con rate limit -> 429), GET /api/auth/me (JWT Bearer 12h).
+  La raiz `/` sirve la SPA cuando existe `front-end/dist` (en dev sin build muestra el estado).
 - Regla de login: TRABAJADORES (Aventura Vip, Belmond, sin empresa) entran con DNI;
   empresa "Particular" (app publica futura) con correo. Vive en SP_LOGIN.
 - Modulos: `/api/usuarios` (GET/POST/PUT con GESTIONAR_USUARIOS o CREAR_USUARIOS;
