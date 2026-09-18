@@ -11,9 +11,17 @@
 import { Pool } from 'pg';
 import { env } from './env';
 
+// En produccion (Seenode, Render, etc.) PostgreSQL exige SSL y suele usar
+// certificados autofirmados que Node no reconoce por defecto. Para que la
+// conexion funcione sin configuraciones extra en la cadena de conexion, se
+// habilita SSL sin verificacion de certificado cuando el host NO es local
+// (en local, como Docker, no se usa SSL).
+const esHostLocal = /(@|\/\/)(localhost|127\.0\.0\.1)(:|\/|$)/.test(env.databaseUrl);
+
 // Se crea el pool con la cadena de conexion de PostgreSQL.
 export const pool = new Pool({
   connectionString: env.databaseUrl,
+  ssl: esHostLocal ? undefined : { rejectUnauthorized: false },
 });
 
 // Control de errores: si una conexion del pool se pierde o falla, se

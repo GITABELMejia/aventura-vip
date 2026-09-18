@@ -49,7 +49,13 @@ async function main() {
   }
 
   console.log('Conectando a la base de datos...');
-  const client = new Client({ connectionString: url });
+  // En produccion (Seenode, etc.) PostgreSQL exige SSL con certificados
+  // autofirmados: se habilita SSL sin verificacion si el host no es local.
+  const esHostLocal = /(@|\/\/)(localhost|127\.0\.0\.1)(:|\/|$)/.test(url);
+  const client = new Client({
+    connectionString: url,
+    ssl: esHostLocal ? undefined : { rejectUnauthorized: false },
+  });
   await client.connect();
 
   for (const archivo of ORDEN) {
