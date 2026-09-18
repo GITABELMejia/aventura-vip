@@ -6,20 +6,29 @@ Ruta de trabajo: `~/Desktop/aventura vip/` (OJO: espacios -> siempre entre comil
 ## Estructura
 - `back-end/` — API REST (Node + Express + TypeScript). Depende de PostgreSQL en Docker (`av-test-pg`).
 - `front-end/` — SPA (React 18 + Vite 5 + Tailwind) + PWA. Proxy dev `/api -> :3000`.
-No hay package.json raíz, no hay git.
+- `package.json` raíz — orquesta todo (`npm run build`, `npm start`, `npm run db:init`).
+- Git: repo `GITABELMejia/aventura-vip` (rama `main`). Desplegado en Seenode.
 
 ## Funcionamiento
 # Backend
 docker start av-test-pg            # si Docker Desktop esta apagado: open -a Docker
 cd back-end && npm run dev          # nodemon + ts-node (no usar node dist en dev)
 npm run build && npm start          # produccion (tsc -> dist/server.js)
-npm run db:init                     # inyecta los 4 scripts SQL (NO es idempotente:
-                                    #   falla si las tablas ya existen; ignorar)
+npm run db:init                     # inyecta los 18 scripts SQL en orden (NO es
+                                    #   idempotente: falla si las tablas ya existen)
 npm test                            # vitest + supertest (9 pruebas; REQUIERE la BD arriba)
 
 # Frontend
 cd front-end && npm run dev         # :5173 (api via proxy)
 npm run build && npm run preview    # :4173 PWA; preview.allowedHosts=true (tunel cloudflare)
+
+## Despliegue (produccion)
+- App: https://aventura-vip.seenode.app — un solo servicio (Express sirve `/api` y `front-end/dist`).
+- Build: `npm run build` · Start: `npm start` · Root Directory: raiz del repo.
+- Auto-deploy activado: cada push a `main` dispara un deploy en Seenode.
+- BD: PostgreSQL gestionado por Seenode. El SSL autofirmado se maneja en
+  `src/config/database.ts` y `db/init.js` (la URL NO necesita `?sslmode=`).
+- Inicializar la BD remota (una sola vez): `DATABASE_URL=... node back-end/db/init.js`.
 
 ## Base de datos (SP-Centric)
 Orden de inyeccion OBLIGATORIO (no es secuencial): 00_SCHEMA -> 02_AUDIT_TRIGGER -> 01_PROCEDURES -> 03_SEEDS.
@@ -53,7 +62,8 @@ Identificadores SQL en MAYUSCULAS, sin comillas dobles. Usuarios demo clave `dem
   via SP_OBTENER_CATALOGOS(); roles via SP_OBTENER_ROL_POR_NOMBRE().
 
 ## Frontend
-- Config: `src/config/api.ts` (API_BASE='/api'), `services/auth.service.ts`.
+- Config: `src/config/api.ts` (`API_BASE='/api'`; si existe `VITE_API_URL` al compilar,
+  usa esa URL absoluta para un backend separado), `services/auth.service.ts`.
 - Sesion: "Recordarme" -> localStorage; sin marcar -> sessionStorage (ambos se leen/limpian).
   `tokenEstaExpirado()` decodifica `exp` del JWT (atob, sin libreria); el interceptor de
   axios hace logout automatico en 401; el Dashboard valida con `/me` al cargar.
@@ -66,7 +76,8 @@ Identificadores SQL en MAYUSCULAS, sin comillas dobles. Usuarios demo clave `dem
 - PDF se generan con fpdf2 (solo Latin-1): NO usar em dash/guion Unicode ni cajas Unicode en el HTML fuente.
 
 ## Seguridad del proyecto
-- `helmet` + CORS restringido por `CORS_ORIGENES` (agregar el dominio Netlify en produccion).
+- `helmet` + CORS restringido por `CORS_ORIGENES` (en Seenode app y API comparten
+  origen, asi que no se requiere CORS; solo si el frontend va aparte, ej. Vercel).
 - Rate limit del login (fuerza bruta). JWT en localStorage (aceptable para tesis).
 - No subir a git: `.env`, `db/credenciales.txt` (eliminado), `node_modules`, `dist` (ver .gitignore).
 
