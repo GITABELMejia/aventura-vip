@@ -70,6 +70,25 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 
 // ----------------------------------------------------------------------------
+// ESTADO DE LA API
+// ----------------------------------------------------------------------------
+// Permite comprobar rapido que el servidor esta vivo:
+//   http://localhost:3000/api
+// Se registra ANTES de los routers porque el router de documentos aplica
+// autenticacion global sobre /api (si no, GET /api pediria token).
+// ----------------------------------------------------------------------------
+const estadoAPI = {
+  nombre: 'API Aventura Vip de Cusco',
+  version: '1.0.0',
+  estado: 'Servidor en linea',
+  documentacion: 'Consulta la guia de la API para ver los endpoints.',
+};
+
+app.get('/api', (_req, res) => {
+  res.json(estadoAPI);
+});
+
+// ----------------------------------------------------------------------------
 // RUTAS
 // ----------------------------------------------------------------------------
 // Todas las rutas de autenticacion viven bajo /api/auth.
@@ -88,26 +107,12 @@ app.use('/api/servicios', serviciosRoutes);
 app.use('/api/configuracion', configuracionRoutes);
 
 // ----------------------------------------------------------------------------
-// RUTA RAZ / BIENVENIDA
-// ----------------------------------------------------------------------------
-// Permite comprobar rapido que el servidor esta vivo desde el navegador:
-//   http://localhost:3000/
-// ----------------------------------------------------------------------------
-app.get('/', (_req, res) => {
-  res.json({
-    nombre: 'API Aventura Vip de Cusco',
-    version: '1.0.0',
-    estado: 'Servidor en linea',
-    documentacion: 'Consulta la guia de la API para ver los endpoints.',
-  });
-});
-
-// ----------------------------------------------------------------------------
 // FRONTEND (PRODUCCION)
 // ----------------------------------------------------------------------------
 // Si existe el build del frontend (front-end/dist), se sirve como estatico y
 // las rutas que no son /api devuelven index.html (SPA). Asi el backend y el
 // frontend comparten el mismo origen y el API_BASE='/api' funciona tal cual.
+// La raiz "/" queda para la app (el router redirige a /login si no hay sesion).
 // ----------------------------------------------------------------------------
 const rutaFrontend = path.resolve(__dirname, '../../front-end/dist');
 if (fs.existsSync(rutaFrontend)) {
@@ -115,6 +120,11 @@ if (fs.existsSync(rutaFrontend)) {
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(rutaFrontend, 'index.html'));
+  });
+} else {
+  // Sin build del frontend (desarrollo), la raiz muestra el estado de la API.
+  app.get('/', (_req, res) => {
+    res.json(estadoAPI);
   });
 }
 
