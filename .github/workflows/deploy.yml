@@ -1,0 +1,29 @@
+# ============================================================================
+# AUTO-DEPLOY A SEENODE
+# ----------------------------------------------------------------------------
+# En cada push a "main" se llama a la API de Seenode para desplegar el commit
+# que se acaba de subir.
+#
+# Secretos del repositorio (Settings > Secrets and variables > Actions):
+#   SEENODE_API_TOKEN       -> token de API de Seenode.
+#   SEENODE_APPLICATION_ID  -> id de la aplicacion en Seenode.
+# ============================================================================
+
+name: Deploy a Seenode
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar despliegue en Seenode
+        run: |
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer ${{ secrets.SEENODE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"gitCommitSha": "${{ github.sha }}"}' \
+            "https://api.seenode.com/v1/applications/${{ secrets.SEENODE_APPLICATION_ID }}/deployments"
