@@ -25,7 +25,8 @@ npm run build && npm run preview    # :4173 PWA; preview.allowedHosts=true (tune
 ## Despliegue (produccion)
 - App: https://aventura-vip.seenode.app — un solo servicio (Express sirve `/api` y `front-end/dist`).
 - Build: `npm run build` · Start: `npm start` · Root Directory: raiz del repo.
-- Auto-deploy activado: cada push a `main` dispara un deploy en Seenode.
+- Auto-deploy via GitHub Actions (`.github/workflows/deploy.yml`): cada push a `main`
+  llama a la API de Seenode. Secretos del repo: `SEENODE_API_TOKEN`, `SEENODE_APPLICATION_ID`.
 - BD: PostgreSQL gestionado por Seenode. El SSL autofirmado se maneja en
   `src/config/database.ts` y `db/init.js` (la URL NO necesita `?sslmode=`).
 - Inicializar la BD remota (una sola vez): `DATABASE_URL=... node back-end/db/init.js`.
